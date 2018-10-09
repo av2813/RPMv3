@@ -1736,8 +1736,8 @@ class ASI_RPM():
                         loops_list, steps_list, q_list, mag_list, monopole_list, vertex_list):
             self.plotCorrelation(folder, q, Hmax, loops, steps)
             self.plotMagnetisation(folder, mag, Hmax, loops, steps)
-            self.plotMonopole(folder, monopole, Hmax, loops, steps)
-            self.plotVertex(folder, vertex, Hmax, loops, steps)
+            #self.plotMonopole(folder, monopole, Hmax, loops, steps)
+            #self.plotVertex(folder, vertex, Hmax, loops, steps)
         plt.show()
 
     def plotCorrelation(self, folder, q, Hmax, loops, steps):
