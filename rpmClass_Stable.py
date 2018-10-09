@@ -110,6 +110,8 @@ class ASI_RPM():
             for y in range(0, 2*self.unit_cells_y+1):
                 if (x+y)%2 != 0:
                     if y%2 == 0:
+                        xpos = x*(self.bar_length+self.vertex_gap)/2
+                        ypos = y*(self.bar_length+self.vertex_gap)/2
                         grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,1.,0.,0., np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                     else:
                         grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,1.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
@@ -1082,9 +1084,9 @@ class ASI_RPM():
         local = self.lattice[x1:x2,y1:y2,:]
         grid = self.lattice
         plt.quiver(grid[:,:,0].flatten(), grid[:,:,1].flatten(),grid[:,:,3].flatten(),grid[:,:,4].flatten(), angles='xy', scale_units='xy',  pivot = 'mid')
-        plt.scatter(grid[:,:,0].flatten(), grid[:,:,1].flatten(), c = grid[:,:,8].flatten())
+        #plt.scatter(grid[:,:,0].flatten(), grid[:,:,1].flatten(), c = grid[:,:,8].flatten())
         plt.plot(grid[x,y,0],grid[x,y,1], 'o')
-        plt.quiver(local[:,:,0].flatten(), local[:,:,1].flatten(),local[:,:,3].flatten(),local[:,:,4].flatten(), angles='xy', scale_units='xy',  pivot = 'mid')
+        plt.quiver(local[:,:,0].flatten(), local[:,:,1].flatten(),local[:,:,3].flatten(),local[:,:,4].flatten(), angles='xy', scale_units='xy',  pivot = 'mid', color = 'b')
         plt.show()
 
     def localFieldHistogram(self, x, y, n, total):
@@ -1102,8 +1104,23 @@ class ASI_RPM():
         ax1.set_title('Dipolar Field - n='+str(n)+' nearest neighbours')
         plt.show()
 
-
-        
+    def latticeFieldHistogram(self, n):
+        field = []
+        ax1.set_title(r'Random State Dipolar Field - n=%.0f nearest neighbours' %(n))
+        s = '''     mean = %.2E
+            std = %.2E
+            range = %.2E''' %(np.mean(np.array(field)), np.std(np.array(field)), (max(field)-min(field))/2.)
+        plt.figtext(0.6,0.7,s)
+        if save == True:
+            folder = os.getcwd()+r'\\'+self.type+r'_localFieldHistogram_length%.2Ewidth%.2Evgap%.2Ethick%.2E\\' \
+            %(self.bar_length, self.bar_width, self.vertex_gap, self.bar_thickness)
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            plt.savefig(folder+r'Histogram_x%.0fy%.0f_n%.0f_total%.0f.png' %(x, y, n, total))
+            plt.savefig(folder+r'Histogram_x%.0fy%.0f_n%.0f_total%.0f.pdf' %(x, y, n, total))
+            plt.close()
+        else:
+            plt.show()
 
     def effectiveCoercive(self, x, y, n):
         '''
@@ -1298,36 +1315,39 @@ class ASI_RPM():
         Type3 = np.array([-1,1,1,1])
         Type3 = np.array([1,1,-1,1])
         Type4 = np.array([1,-1,1,-1])
-        for x in np.arange(0, self.side_len_x):
-            for y in np.arange(0, self.side_len_y):
-                Corr_local = []
-                if np.isnan(grid[x,y,8])!=True:
-                    x1 = x - 3
-                    x2 = x + 4
-                    y1 = y - 3
-                    y2 = y + 4
+        if self.type =='square':
+            for x in np.arange(0, self.side_len_x):
+                for y in np.arange(0, self.side_len_y):
+                    Corr_local = []
+                    if np.isnan(grid[x,y,8])!=True:
+                        x1 = x - 3
+                        x2 = x + 4
+                        y1 = y - 3
+                        y2 = y + 4
 
-                    if x1<0:
-                        x1 = 0
-                    if x2>self.side_len_x:
-                        x2 = self.side_len_x
-                    if y1<0:
-                        y1 = 0
-                    if y2>self.side_len_y:
-                        y2 = self.side_len_y
-                    local = grid[x1:x2,y1:y2]
-                    spin_code0 = np.array([grid[x+1,y,3],grid[x-1,y,3],grid[x,y+1,4],grid[x,y-1,4]])
-                    Vertex[x,y,0:4] = spin_code0
-                    if np.array_equal(Vertex[x,y,0:4],Type1) or np.array_equal(Vertex[x,y,0:4],-1.*Type1):
-                        Vertex[x,y,4] = 1
-                    elif np.array_equal(Vertex[x,y,0:4],Type4) or np.array_equal(Vertex[x,y,0:4], -1.*Type4):
-                        Vertex[x,y,4] = 4
-                    elif np.array_equal(Vertex[x,y,0:4], Type21) or np.array_equal(Vertex[x,y,0:4], -1.*Type21) or np.array_equal(Vertex[x,y,0:4],Type22) or np.array_equal(Vertex[x,y,0:4],-1.*Type22):
-                        Vertex[x,y,4] = 2
+                        if x1<0:
+                            x1 = 0
+                        if x2>self.side_len_x:
+                            x2 = self.side_len_x
+                        if y1<0:
+                            y1 = 0
+                        if y2>self.side_len_y:
+                            y2 = self.side_len_y
+                        local = grid[x1:x2,y1:y2]
+                        spin_code0 = np.array([grid[x+1,y,3],grid[x-1,y,3],grid[x,y+1,4],grid[x,y-1,4]])
+                        Vertex[x,y,0:4] = spin_code0
+                        if np.array_equal(Vertex[x,y,0:4],Type1) or np.array_equal(Vertex[x,y,0:4],-1.*Type1):
+                            Vertex[x,y,4] = 1
+                        elif np.array_equal(Vertex[x,y,0:4],Type4) or np.array_equal(Vertex[x,y,0:4], -1.*Type4):
+                            Vertex[x,y,4] = 4
+                        elif np.array_equal(Vertex[x,y,0:4], Type21) or np.array_equal(Vertex[x,y,0:4], -1.*Type21) or np.array_equal(Vertex[x,y,0:4],Type22) or np.array_equal(Vertex[x,y,0:4],-1.*Type22):
+                            Vertex[x,y,4] = 2
+                        else:
+                            Vertex[x,y,4] = 3
                     else:
-                        Vertex[x,y,4] = 3
-                else:
-                    Vertex[x,y,:] = np.array([np.nan, np.nan, np.nan, np.nan, np.nan])
+                        Vertex[x,y,:] = np.array([np.nan, np.nan, np.nan, np.nan, np.nan])
+        if self.type == 'kagome':
+            Vertex = np.zeros((self.side_len_x, self.side_len_y, 5))
         return(Vertex)
 
     def vertexTypeMap(self):
@@ -1758,17 +1778,18 @@ class ASI_RPM():
         plt.savefig(os.path.join(folder, 'MonopoleFieldsteps'))
 
     def plotVertex(self, folder, vertex, Hmax, loops, steps):
-       	ax_v = vert.add_subplot(111)
-       	ax_v.plot(vertex[:,0],'.', label = 'Type 1')
-       	ax_v.plot(vertex[:,1],'.', label = 'Type 2')
-       	ax_v.plot(vertex[:,2],'.', label = 'Type 3')
-       	ax_v.plot(vertex[:,3],'.', label = 'Type 4')
-       	plt.ylabel('Vertex Percentage')
-       	plt.xlabel('Number of field steps')
-       	for i in np.arange(1, loops):
-       	    	plt.axvline(i*(4*(steps+1)-1), color = 'k')
-       	plt.legend()
-       	plt.savefig(os.path.join(folder, 'VertexFieldsteps')) 
+        vert = plt.figure('Vertex')
+        ax_v = vert.add_subplot(111)
+        ax_v.plot(vertex[:,0],'.', label = 'Type 1')
+        ax_v.plot(vertex[:,1],'.', label = 'Type 2')
+        ax_v.plot(vertex[:,2],'.', label = 'Type 3')
+        ax_v.plot(vertex[:,3],'.', label = 'Type 4')
+        plt.ylabel('Vertex Percentage')
+        plt.xlabel('Number of field steps')
+        for i in np.arange(1, loops):
+            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+        plt.legend()
+        plt.savefig(os.path.join(folder, 'VertexFieldsteps')) 
 
 
 
