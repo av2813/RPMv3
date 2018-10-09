@@ -38,7 +38,6 @@ class ASI_RPM():
     def save(self, file, folder = os.getcwd()):
         '''
         Save existing arrays
-        To Do
         '''
         if folder == None:
             folder = os.getcwd()
@@ -52,7 +51,6 @@ class ASI_RPM():
     def load(self, file):
         '''
         load in existing arrays
-        To Do
         '''
         npzfile = np.load(file)
         parameters = npzfile['arr_1']
@@ -296,7 +294,6 @@ class ASI_RPM():
         self.lattice = grid
 
     def tetris(self, Hc_mean = 0.03, Hc_std = 0.05):
-        #Working on it
         self.type = 'tetris'
         self.Hc = Hc_mean
         self.Hc_std = Hc_std
@@ -452,7 +449,6 @@ class ASI_RPM():
     
     def subtractCount(self, lattice1, lattice2):
         '''
-        Haven't actually tested yet.
         Should take two instances of the ASI_RPM class and then return the difference between the number of spins flipped
         '''
         l1 = lattice1.returnLattice()
@@ -1269,6 +1265,9 @@ class ASI_RPM():
         self.lattice = grid
 
     def correlation(self, lattice1, lattice2):
+        '''
+        Returns the correlation between lattice1 and lattice2
+        '''
         l1 = lattice1.returnLattice()
         l2 = lattice2.returnLattice()
         total = 0
@@ -1285,6 +1284,9 @@ class ASI_RPM():
         return(same/total)
 
     def netMagnetisation(self):
+        '''
+        returns the magnetisation in the x and y directions
+        '''
         grid = copy.deepcopy(self.lattice)
         grid[grid[:,:,6]==0] = np.nan
         mx = grid[:,:,3].flatten()
@@ -1292,6 +1294,9 @@ class ASI_RPM():
         return(np.array([np.nanmean(mx),np.nanmean(my)]))
         
     def monopoleDensity(self):
+        '''
+        Returns the monopole density of a square or kagome lattice
+        '''
         #4in/0out have a charge of 1
         #3in/1out have a charge of 0.5
         #The density is then calculated by dividing by the total area minus the edges
