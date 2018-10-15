@@ -15,6 +15,10 @@ import matplotlib.mlab as mlab
 
 
 class ASI_RPM():
+	'''
+	Class for initialising the lattice be performing field sweeps, mainly
+	return point memory
+	'''
     def __init__(self, unit_cells_x, unit_cells_y, lattice = None, \
         bar_length = 220e-9, vertex_gap = 1e-7, bar_thickness = 25e-9, \
         bar_width = 80e-9, magnetisation = 800e3):
@@ -81,7 +85,7 @@ class ASI_RPM():
         npfile = np.load(file)
         print("loaded")
         #parameters = npzfile['arr_1']
-        print (npfile) 
+        print(npfile) 
         grid = self.lattice
         for y in range(npfile.shape[1]):
             for x in range(npfile.shape[0]):
@@ -90,9 +94,24 @@ class ASI_RPM():
                     if npfile[x,y] == 1:
                         print("magnetisation before =",grid[x,y,3:5])
                         grid[x,y,3:5] *= -1 
-                        
                         print("magnetisation after =",grid[x,y,3:5])
         grid[:,:,3:5][grid[:,:,3:5]==0.] = 0.
+
+
+
+    '''
+	These are the functions that define the lattice type and
+	position of each of the bars:
+		- Square
+		- Tilted square
+		- Kagome
+		- Short shakti
+		- Long shakti
+		- Tetris
+	The lattice is stored as a numpy array [x_position, y_position, z_position,
+	x_magnetisation, y_magnetisation, z_magnetisation, coercive field,
+	flip_count, vertex or not]
+    '''
         
     def square(self, Hc_mean = 0.03, Hc_std = 0.05):
         '''
@@ -103,7 +122,7 @@ class ASI_RPM():
         One thing to potentially change is to have the positions in nanometers
         '''
         self.type = 'square'
-        self.Hc = Hc_mean
+        self.Hc = Hc_mean				#Unit cell direction in x andy y
         self.Hc_std = Hc_std
         self.side_len_x = 2*self.unit_cells_x+1
         self.side_len_y = 2*self.unit_cells_y+1
@@ -134,7 +153,7 @@ class ASI_RPM():
         '''
         self.type = 'tiltsquare'
         theta = np.pi*theta/180.
-        self.side_len_x = 2*self.unit_cells_x+1
+        self.side_len_x = 2*self.unit_cells_x+1			#Unit cell direction in x andy y
         self.side_len_y = 2*self.unit_cells_y+1
         grid = np.zeros((2*self.unit_cells_x+1, 2*self.unit_cells_y+1, 9))        
         for x in range(0, 2*self.unit_cells_x+1):
@@ -169,7 +188,7 @@ class ASI_RPM():
         self.Hc_std = Hc_std
         xfactor = 2*np.cos(np.pi/6)
         yfactor = 2*np.sin(np.pi/6)
-        self.side_len_x = 2*self.unit_cells_x+1
+        self.side_len_x = 2*self.unit_cells_x+1			#Unit cell direction in x andy y
         self.side_len_y = 4*self.unit_cells_y+1
         grid = np.zeros((2*self.unit_cells_x+1, 4*self.unit_cells_y+1,9))
         xfactor = 2*np.cos(np.pi/6)
@@ -207,8 +226,13 @@ class ASI_RPM():
 
 
     def short_shakti(self, Hc_mean = 0.03, Hc_std = 0.05):
-        self.type = 'long_shakti'
-        self.side_len_x = 4*self.unit_cells_x+1
+    	'''
+		Creates a lattice of short shakti spin ice
+		Takes the unit cell from the initislly defined parameters
+		Uses a normal distribution for the coercive field of each bar
+		'''
+        self.type = 'short_shakti'
+        self.side_len_x = 4*self.unit_cells_x+1			#Unit cell direction in x andy y
         self.side_len_y = 4*self.unit_cells_y+1
         grid = np.zeros((self.side_len_x, self.side_len_y, 9))        
         for x in range(0, self.side_len_x):
@@ -241,10 +265,15 @@ class ASI_RPM():
 
 
     def long_shakti(self, Hc_mean = 0.062, Hc_std = 0.05):
+    	'''
+		Creates a lattice of long shakti spin ice
+		Takes the unit cell from the initislly defined parameters
+		Uses a normal distribution for the coercive field of each bar
+		'''
         self.type = 'long_shakti'
         self.Hc = Hc_mean
         self.Hc_std = Hc_std
-        self.side_len_x = 4*self.unit_cells_x+1
+        self.side_len_x = 4*self.unit_cells_x+1			#Unit cell direction in x andy y
         self.side_len_y = 4*self.unit_cells_y+1
         grid = np.zeros((self.side_len_x, self.side_len_y, 9))        
         for x in range(0, self.side_len_x):
@@ -255,7 +284,7 @@ class ASI_RPM():
                     else:
                         grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,1.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                 else:
-                    if x%2 ==0:     #and y%(self.side_len_y-1)!=0 and x%(self.side_len_x-1)!=0
+                    if x%2 ==0:     
                         grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,0.,0.,0,0,0])
                     else:
                         grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,0.,0.,0,0,None])
@@ -298,10 +327,15 @@ class ASI_RPM():
         self.lattice = grid
 
     def tetris(self, Hc_mean = 0.03, Hc_std = 0.05):
+    	'''
+		Creates a lattice of tertris artificial spin ice
+		Takes the unit cell from the initislly defined parameters
+		Uses a normal distribution for the coercive field of each bar
+		'''
         self.type = 'tetris'
         self.Hc = Hc_mean
         self.Hc_std = Hc_std
-        self.side_len_x = 16*self.unit_cells_x+1
+        self.side_len_x = 16*self.unit_cells_x+1			#Unit cell direction in x andy y
         self.side_len_y = 16*self.unit_cells_y+1
         grid = np.zeros((self.side_len_x, self.side_len_y, 9))        
         for x in range(0, self.side_len_x):
@@ -355,34 +389,6 @@ class ASI_RPM():
                     grid[x+1,y-1] = np.array([(x+1)*self.unit_cell_len,(y-1)*self.unit_cell_len,0.,0.,0.,0.,0,0,None])
         self.lattice = grid
 
-
-    '''
-    def kagome2(self, , Hc_mean = 0.03, Hc_std = 0.05):
-        self.type = 'kagome'
-        self.side_len_x = 4*self.unit_cells_x+3
-        self.side_len_y = 4*self.unit_cells_y+1
-        grid = np.zeros((self.side_len_x, self.side_len_y,8))
-        for x in range(0, self.side_len_x):
-            for y in range(0, self.side_len_y):
-                if x%2!=0 and y%4==0:
-                    if (x-1)%4==0:
-                        grid[x,y] = np.array([x*self.unit_cell_len,(y+2)*self.unit_cell_len,0.,1.,0.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0])
-                    else:
-                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,1.,0.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0])
-                elif x%2 ==0 and (y-1)%4==0:
-                    if x%4==0:
-                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.5,(3**0.5/2),0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0])
-                    else:
-                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,-0.5,(3**0.5/2),0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0])
-                elif x%2 ==0 and (y-3)%4==0:
-                    if x%4==0:
-                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,-0.5,(3**0.5/2),0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0])
-                    else:
-                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.5,(3**0.5/2),0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0])
-                else:
-                    grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0,0,0,0,0])
-        self.lattice = grid
-    '''
     
     def graph(self):
         '''
@@ -411,14 +417,14 @@ class ASI_RPM():
         ax[1].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax[1].set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
         ax[1].set_title('Counts')
-        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[1])
-        cb2.locator = MaxNLocator( nbins = 5)
-        cb2.update_ticks()
-        for axes in ax:
-            axes.plot([1, 2, 3], [1, 2, 3])
-            axes.set(adjustable='box-forced', aspect='equal')
-            plt.gca().xaxis.set_major_locator( MaxNLocator(nbins = 7, prune = 'lower') )
-            plt.gca().yaxis.set_major_locator( MaxNLocator(nbins = 6) )
+        #cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[1])
+        #cb2.locator = MaxNLocator( nbins = 5)
+        #cb2.update_ticks()
+        #for axes in ax:
+        #    axes.plot([1, 2, 3], [1, 2, 3])
+        #    axes.set(adjustable='box-forced', aspect='equal')
+        #    plt.gca().xaxis.set_major_locator( MaxNLocator(nbins = 7, prune = 'lower') )
+        #    plt.gca().yaxis.set_major_locator( MaxNLocator(nbins = 6) )
         plt.ticklabel_format(style='sci', scilimits=(0,0))
         plt.tight_layout()
         fig, ax =plt.subplots()
@@ -429,8 +435,19 @@ class ASI_RPM():
         return(graph)
         plt.draw()
         plt.show()
+
+    '''
+	Graphing the state of the lattice
+		- graph
+		- graph charge
+		- Correlation
+		- 
+    '''
         
     def animateGraph(self):
+    	'''
+		Returns an image of the state of the lattice
+    	'''
         grid = self.lattice
         X = grid[:,:,0].flatten()
         Y = grid[:,:,1].flatten()
@@ -1788,8 +1805,8 @@ class ASI_RPM():
                         loops_list, steps_list, q_list, mag_list, monopole_list, vertex_list):
             self.plotCorrelation(folder, q, Hmax, loops, steps)
             self.plotMagnetisation(folder, mag, Hmax, loops, steps)
-            self.plotMonopole(folder, monopole, Hmax, loops, steps)
-            self.plotVertex(folder, vertex, Hmax, loops, steps)
+            #self.plotMonopole(folder, monopole, Hmax, loops, steps)
+            #self.plotVertex(folder, vertex, Hmax, loops, steps)
         plt.show()
 
     def plotCorrelation(self, folder, q, Hmax, loops, steps):

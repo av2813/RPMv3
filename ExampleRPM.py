@@ -52,10 +52,8 @@ loops = 6					#The number of minor field loops to be done
 
 #File information
 
-folder = r'C:\Users\alexv\OneDrive\Documents\GitHub\RPMv2\XinTest4'	#The folder for the files to be saved in.
+folder = r'C:\Users\alexv\Documents\Work\GitHub\RPMv3'	#The folder for the files to be saved in.
 
-folder = r'C:\Users\av2813\Documents\GitHub\RPMv2\XinTest'	#The folder for the files to be saved in.
-													#must in the format as shown
 
 #Define the system
 #The parameters defined above go into the function below that defines the 
