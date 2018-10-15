@@ -1,6 +1,6 @@
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
+#import matplotlib
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as cl
@@ -34,6 +34,8 @@ class ASI_RPM():
         self.width = bar_width
         self.magnetisation = magnetisation
         self.unit_cell_len = (bar_length+vertex_gap)/2
+        self.interType = 'dumbbell'
+
 
     def save(self, file, folder = os.getcwd()):
         '''
@@ -54,6 +56,7 @@ class ASI_RPM():
         '''
         npzfile = np.load(file)
         parameters = npzfile['arr_1']
+        print(len(parameters))
         self.unit_cells_x = np.int(parameters[0])
         self.unit_cells_y = np.int(parameters[1])
         self.bar_length = np.float(parameters[2])
@@ -64,8 +67,9 @@ class ASI_RPM():
         self.side_len_x = np.int(parameters[7])
         self.side_len_y = np.int(parameters[8])
         self.type = parameters[9]
-        self.Hc = parameters[10]
-        self.Hc_std = parameters[11]
+        if len(parameters) > 10:
+            self.Hc = parameters[10]
+            self.Hc_std = parameters[11]
         self.lattice = npzfile['arr_0']
 
     def loadSpinWrite(self, file):
@@ -395,13 +399,13 @@ class ASI_RPM():
         C = grid[:,:,7].flatten()
         Charge = grid[:,:,8].flatten()
         fig, ax =plt.subplots(ncols = 2,sharex=True, sharey=True)
-        plt.set_cmap(cm.jet)
+        plt.set_cmap(cm.plasma)
         graph = ax[0].quiver(X, Y, Mx, My, Hc, angles='xy', scale_units='xy',  pivot = 'mid')
         ax[0].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax[0].set_ylim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax[0].set_title('Coercive Field')
         cb1 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[0], format='%.2e',boundaries = np.linspace(np.min(Hc[np.nonzero(Hc)]), max(Hc),1000))
-        cb1.locator = MaxNLocator( nbins = 7)
+        cb1.locator = MaxNLocator(nbins = 7)
         cb1.update_ticks()
         graph = ax[1].quiver(X, Y, Mx, My, C, angles='xy', scale_units='xy',  pivot = 'mid')
         ax[1].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
@@ -457,6 +461,26 @@ class ASI_RPM():
         #print(diff)
         l1[:,:,7] = diff
         return(self(self.unit_cells_x, self.unit_cells_y,lattice = diff))
+
+    def magneticOrdering(self):
+        grid = self.lattice
+        #grid[grid[:,:,6] == 0] = np.nan
+        X = grid[:,:,0]
+        Y = grid[:,:,1]
+        Mx = grid[:,:,3]
+        My = grid[:,:,4]
+
+        M_vect = Mx+1j*My
+        Mag_fft = np.fft.fft2(M_vect)
+        Mag_fftR = np.real(Mag_fft)
+        Mag_fftI = np.imag(Mag_fft)
+        Mag_fftA = np.absolute(Mag_fft)
+        print(Mag_fft**2)
+        plt.imshow(Mag_fftA)
+        plt.colorbar()
+        plt.show()
+
+
 
     
     def relax(self, Happlied = np.array([0.,0.,0.]), n=10):
@@ -840,6 +864,20 @@ class ASI_RPM():
     def clearLattice(self):
         self.lattice = None
     
+
+    
+    def dumbbell(self, m, r, r0):
+        m = np.array(m)
+        r = np.array(r)
+        r0 = np.array(r0)
+
+        mag_charge = self.bar_thickness*self.magnetisation*self.bar_width
+
+        r2 = np.subtract(np.transpose(r), r0).T + m*self.bar_length/2
+        r1 = np.subtract(np.transpose(r), r0).T - m*self.bar_length/2
+        B = 1e-7*mag_charge*(r1/np.linalg.norm(r1)**3-r2/np.linalg.norm(r2)**3)
+        return(B)
+
     def dipole(self, m, r, r0):
         """Calculate a field in point r created by a dipole moment m located in r0.
         Spatial components are the outermost axis of r and returned B.
@@ -1032,6 +1070,12 @@ class ASI_RPM():
         #ax.set_ylim([-1*self.unit_cell_len, self.side_len_y*self.unit_cell_len])
         #ax.set_title('Vertex Charge Map')
 
+    def fieldCalc(self,mag, r0, pos):
+        if self.interType == 'dipole':
+            return(self.dipole(mag, r0, pos))
+        if self.interType == 'dumbbell':
+            return(self.dumbbell(mag, r0, pos))
+
 
     
     def Hlocal2(self, x,y,n =1):
@@ -1059,7 +1103,7 @@ class ASI_RPM():
 
         for pos, mag in zip(r, m):
             if np.linalg.norm(pos-r0)/(n+1)<=1.0 and np.array_equal(pos, r0)!=True:
-                Hl.append(self.dipole(mag, r0, pos))
+                Hl.append(self.fieldCalc(mag, r0, pos))
         return(sum(Hl))
 
     def localPlot(self,x,y,n):
@@ -1100,7 +1144,7 @@ class ASI_RPM():
         ax1.set_title('Dipolar Field - n='+str(n)+' nearest neighbours')
         plt.show()
 
-    def latticeFieldHistogram(self, n):
+    def latticeFieldHistogram(self, n, save = False):
         field = []
         ax1.set_title(r'Random State Dipolar Field - n=%.0f nearest neighbours' %(n))
         s = '''     mean = %.2E
@@ -1687,6 +1731,14 @@ class ASI_RPM():
     def changeWidth(self, newbar_width):
         self.bar_width = newbar_width
 
+    def changeinteractionType(self, interType='dumbbell'):
+        if interType == 'dipole':
+            self.interType = 'dipole'
+        if interType == 'dumbbell':
+            self.interType = 'dumbbell'
+
+
+
     def changeVertexgap(self, newvertex_gap):
         '''
         changes the vertex gap in the rpm class to the newvertex_gap
@@ -1794,7 +1846,80 @@ class ASI_RPM():
         for i in np.arange(1, loops):
             plt.axvline(i*(4*(steps+1)-1), color = 'k')
         plt.legend()
-        plt.savefig(os.path.join(folder, 'VertexFieldsteps')) 
+        plt.savefig(os.path.join(folder, 'VertexFieldsteps'))
+
+
+class thermalKMC(ASI_RPM):
+    def __init__(self, temp, K_ani, rate0, Happ, Htheta, n = 3):
+        self.temp = temp
+        self.K_ani = K_ani
+        self.rate0 = rate0
+        self.Happ = Happ
+        self.Htheta = Htheta
+        self.n = n
+
+    def changeTemp(self, temp_new):
+        self.temp = temp_new
+
+    def changeK_ani(self, K_ani_new):
+        self.K_ani = K_ani_new
+
+    def changeRate0(self, rate0_new):
+        self.rate0 = rate0_new
+
+    def changeHapp(self, Happ_new):
+        self.Happ = Happ_new
+
+    def changeHapp(self, Htheta_new):
+        self.Htheta = Htheta_new
+
+    def thermalEnergy(self):
+        k_B = 1.38064852e-23
+        return(k_B*self.temp)
+
+    def demagEnergy(self,x,y):
+        fieldApplied = self.Happ*np.array([np.cos(self.Htheta), np.sin(self.Htheta), 0.])
+        fieldLocal = self.Hlocal(x,y, self.n)
+        field = fieldLocal+fieldApplied
+        demag = -1*4e-7*np.pi*np.dot(self.lattice[x,y,3:6], field)
+        return(demag)
+
+    def demagEnergyDiff(self, x, y):
+        E_init = self.demagEnergy(x, y)
+        self.flipSpin(x,y)
+        E_final = self.demagEnergy(x, y)
+        self.flipSpin(x,y)
+        return(E_final - E_init)
+
+    def anisotropyEnergy(self):
+        volume = self.width*self.bar_thickness*self.bar_length
+        return(self.K_ani*volume)
+
+    def flipProb(self, x,y):
+        thermal_energy = np.sum(self.thermalEnergy())
+        deltaE = np.sum(self.anisotropyEnergy(),self.demagEnergyDiff(x,y))
+        prob = np.exp(-deltaE/thermal_energy)
+        return(self.rate0*prob)
+
+    def thermalMC(self, rate0):
+        positions = []
+        rates = np.zeros((self.side_len_x, self.side_len_y))
+        for x in np.arange(0, self.side_len_x):
+            for y in np.arange(0, self.side_len_y):
+                if abs(self.lattice[x,y,6]) != 0:
+                    rate = self.flipProb(x,y)
+        for state in np.arange(0, samples):
+            self.load(folder+r'InitialState')
+            switch = 0
+            flip_loc = []
+            while switch<flips:
+                x = np.random.randint(0, self.side_len_x)
+                y = np.random.randint(0, self.side_len_y)
+                if grid[x,y,6]!=0:
+                    self.flipSpin(x,y)
+                    switch+=1
+                    flip_loc.append([x,y])
+
 
 
 

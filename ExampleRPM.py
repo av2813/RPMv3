@@ -1,20 +1,15 @@
-'''
-Xin Code
-
-'''
-
 #Import the necessary packages to run the code
+import matplotlib
+matplotlib.use('TkAgg')
 import rpmClass_Stable as rpm 		#Most recent version of the RPM artificial spin ice code
 
-import importlib			#Package to update the version of rpmClass_Stable
+from importlib import *			#Package to update the version of rpmClass_Stable
 import numpy as np			#Mathematics package
 
-importlib.reload(rpm)		#Reloads RPM file
+reload(rpm)		#Reloads RPM file
 
-import importlib			#Package to update the 
-import numpy as np
-
-importlib.reload(rpm)		#
+import os
+import matplotlib.pyplot as plt
 
 
 #Parameters 
@@ -38,7 +33,7 @@ magnetisation = 830e3		#Saturation magnetisation of material in A/m (permalloy i
 
 
 #Lattice Parameters
-size = 5					#Define the size of the lattice
+size = 100					#Define the size of the lattice
 
 #Minor loop Parameters
 
@@ -74,10 +69,28 @@ lattice.square(Hc, Hc_std/100)	#Specify whether it is a square or kagome lattice
 #lattice.randomMag()
 
 #Initiate the minor loop (field sweep)
-
+folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\MinorLoops\15x15\Happ1p00'
+file = r'Lattice_Loop7_FieldStrength-87p68mT_Angle0p79.npz'
+for root, dirs, files in os.walk(folder):
+	for file in files:
+		if file[-4:] == '.npz':
+			print(root)
+			lattice.load(os.path.join(root, file))
+			lattice.latticeFieldHistogram(5, save = False)
+			plt.figure()
+			plt.title(file)
+			lattice.graph()
+			plt.show()
+filename = os.path.join(folder, file)
+lattice.load(filename)
+lattice.graph()
+plt.show()
 
 lattice.randomMag()
 
+lattice.magneticOrdering()
+plt.show()
+'''
 #Initiate the minor loop (field sweep)
 
 lattice.fieldSweep(Hmax = field_max, steps = steps, \
@@ -106,3 +119,4 @@ lattice.fieldSweepAnalysis(folder)
 
 
 
+'''
