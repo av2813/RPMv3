@@ -66,19 +66,31 @@ def testLattices():
 	squareLattice = rpm.ASI_RPM(20,20)
 	squareLattice.square()
 	squareLattice.graph()
+	kagomeLattice = rpm.ASI_RPM(20,20)
+	kagomeLattice.kagome()
+	kagomeLattice.graph()
+	tetrisLattice = rpm.ASI_RPM(10,10)
+	tetrisLattice.tetris()
+	tetrisLattice.graph()
+	shaktiLattice = rpm.ASI_RPM(20,20)
+	shaktiLattice.shortShakti()
+	shaktiLattice.graph()
+	shaktiLattice = rpm.ASI_RPM(20,20)
+	shaktiLattice.longShakti()
+	shaktiLattice.graph()
 
 
-testLattices()
+#testLattices()
 
 
 
 def graphingTest():
 	lattice= rpm.ASI_RPM(20, 20)
 	lattice.square()
-	#lattice.graph()
-	#lattice.graphCharge()
-	#lattice.fieldPlot()
-	#lattice.vertexTypeMap()
+	lattice.graph()
+	lattice.graphCharge()
+	lattice.fieldPlot()
+	lattice.vertexTypeMap()
 	lattice.magneticOrdering()
 
 graphingTest()

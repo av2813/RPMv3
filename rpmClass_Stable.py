@@ -225,7 +225,7 @@ class ASI_RPM():
         self.lattice = grid
 
 
-    def short_shakti(self, Hc_mean = 0.03, Hc_std = 0.05):
+    def shortShakti(self, Hc_mean = 0.03, Hc_std = 0.05):
         '''
         Creates a lattice of short shakti spin ice
         Takes the unit cell from the initislly defined parameters
@@ -264,7 +264,7 @@ class ASI_RPM():
         self.lattice = grid
 
 
-    def long_shakti(self, Hc_mean = 0.062, Hc_std = 0.05):
+    def longShakti(self, Hc_mean = 0.062, Hc_std = 0.05):
         '''
         Creates a lattice of long shakti spin ice
         Takes the unit cell from the initislly defined parameters
@@ -652,7 +652,6 @@ class ASI_RPM():
         return(self(self.unit_cells_x, self.unit_cells_y,lattice = diff))
 
     def magneticOrdering(self):
-<<<<<<< HEAD
         '''
         Performs a fourier transform of the lattice and returns a graph of the 
         amplitude in k-space
@@ -666,8 +665,8 @@ class ASI_RPM():
         My = grid[:,:,4]
         M_vect = Mx+1j*My
         Mag_fft = np.fft.fft2(M_vect)
-        kx = np.fft.fftfreq(self.side_len_x, 1/self.unit_cells_x)
-        ky = np.fft.fftfreq(self.side_len_x, 1/self.unit_cells_y)
+        kx = np.fft.fftfreq(self.side_len_x, self.unit_cells_x)
+        ky = np.fft.fftfreq(self.side_len_x, self.unit_cells_y)
         Mag_fftR = np.real(Mag_fft)
         Mag_fftI = np.imag(Mag_fft)
         Mag_fftA = np.absolute(Mag_fft)
