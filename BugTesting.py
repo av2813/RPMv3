@@ -62,4 +62,13 @@ def testDumbellvsDipole():
 	plt.show()
 
 
+def testLattices():
+	squareLattice = rpm.ASI_RPM(20,20)
+	squareLattice.square()
+	squareLattice.graph()
+
+
+testLattices()
+
+
 
