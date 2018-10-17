@@ -72,3 +72,14 @@ testLattices()
 
 
 
+def graphingTest():
+	lattice= rpm.ASI_RPM(20, 20)
+	lattice.square()
+	#lattice.graph()
+	#lattice.graphCharge()
+	#lattice.fieldPlot()
+	#lattice.vertexTypeMap()
+	lattice.magneticOrdering()
+
+graphingTest()
+plt.show()

@@ -429,23 +429,25 @@ class ASI_RPM():
         ax[1].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax[1].set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
         ax[1].set_title('Counts')
-        #cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[1])
-        #cb2.locator = MaxNLocator( nbins = 5)
-        #cb2.update_ticks()
-        #for axes in ax:
-        #    axes.plot([1, 2, 3], [1, 2, 3])
-        #    axes.set(adjustable='box-forced', aspect='equal')
-        #    plt.gca().xaxis.set_major_locator( MaxNLocator(nbins = 7, prune = 'lower') )
-        #    plt.gca().yaxis.set_major_locator( MaxNLocator(nbins = 6) )
+        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[1])
+        cb2.locator = MaxNLocator( nbins = 5)
+        cb2.update_ticks()
+        for axes in ax:
+            axes.plot([1, 2, 3], [1, 2, 3])
+            axes.set(adjustable='box-forced', aspect='equal')
+            plt.gca().xaxis.set_major_locator( MaxNLocator(nbins = 7, prune = 'lower') )
+            plt.gca().yaxis.set_major_locator( MaxNLocator(nbins = 6) )
         plt.ticklabel_format(style='sci', scilimits=(0,0))
         plt.tight_layout()
-        fig, ax =plt.subplots()
-        plt.scatter(X, Y, c = Charge)
-        plt.quiver(X, Y, Mx, My, C, angles='xy', scale_units='xy',  pivot = 'mid')
-        ax.set_xlim([-1*self.unit_cell_len, np.max(X)])
-        ax.set_ylim([-1*self.unit_cell_len, np.max(Y)])
-        return(graph)
-        plt.draw()
+        #fig, ax_ver =plt.subplots()
+        #plt.scatter(X, Y, c = Charge)
+        #plt.quiver(X, Y, Mx, My, C, angles='xy', scale_units='xy',  pivot = 'mid')
+        #ax_ver.set_xlim([-1*self.unit_cell_len, np.max(X)])
+        #ax_ver.set_ylim([-1*self.unit_cell_len, np.max(Y)])
+        #ax_ver.set(adjustable='box-forced', aspect='equal')
+        #plt.ticklabel_format(style='sci', scilimits=(0,0))
+        #plt.tight_layout()
+        #return(graph)
         plt.show()
 
     def graphCharge(self):
@@ -476,7 +478,10 @@ class ASI_RPM():
         ax.quiver(X, Y, Mx, My, angles='xy', scale_units='xy',  pivot = 'mid', zorder=1)
         # scatter with colormap mapping to z value
         ax.scatter(X,Y,s=80,c=MagCharge, marker = 'o', cmap = cm.seismic, zorder=2, edgecolor='k' );
-        
+        ax.set(adjustable='box-forced', aspect='equal')
+        plt.ticklabel_format(style='sci', scilimits=(0,0))
+        plt.tight_layout()
+        plt.show()
         #Y2 = grid[:,:,1].flatten()
         #Charge = grid[:,:,8].flatten()
         #Charge = np.array(Charge, dtype = np.double)
@@ -493,7 +498,10 @@ class ASI_RPM():
         #ax.set_ylim([-1*self.unit_cell_len, self.side_len_y*self.unit_cell_len])
         #ax.set_title('Vertex Charge Map')
 
-    def fieldplot(self, n=5):
+    def fieldPlot(self, n=5):
+        '''
+        Plots the field direction and magnitude at each point on the graph
+        '''
         grid = self.lattice
         field = np.zeros((self.side_len_x,self.side_len_y,3))
         for x in range(0, self.side_len_x):
@@ -504,9 +512,12 @@ class ASI_RPM():
         Hx = field[:,:, 0].flatten()
         Hy = field[:,:, 1].flatten()
         Hz = field[:,:, 2].flatten()
+        fieldMag = (Hx**2+Hy**2+Hz**2)**0.5
         fig, ax =plt.subplots(ncols = 2,sharex=True, sharey=True)
         plt.set_cmap(cm.plasma)
-        graph = ax[0].quiver(X, Y, Hx, Hy, angles='xy', scale_units='xy',  pivot = 'mid')
+        graph = ax[0].quiver(X, Y, Hx, Hy,fieldMag, angles='xy', scale_units='xy',  pivot = 'mid')
+        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[1])
+        cb2.locator = MaxNLocator(nbins = 5)
         #qk = ax[0].quiverkey(graph, 0.45, 0.9, 10, r'$mT$', labelpos='E',
         #           coordinates='figure')
         ax[0].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
@@ -641,10 +652,12 @@ class ASI_RPM():
         return(self(self.unit_cells_x, self.unit_cells_y,lattice = diff))
 
     def magneticOrdering(self):
+<<<<<<< HEAD
         '''
         Performs a fourier transform of the lattice and returns a graph of the 
         amplitude in k-space
         '''
+        plt.set_cmap(cm.plasma)
         grid = self.lattice
         #grid[grid[:,:,6] == 0] = np.nan
         X = grid[:,:,0]
@@ -653,11 +666,15 @@ class ASI_RPM():
         My = grid[:,:,4]
         M_vect = Mx+1j*My
         Mag_fft = np.fft.fft2(M_vect)
+        kx = np.fft.fftfreq(self.side_len_x, 1/self.unit_cells_x)
+        ky = np.fft.fftfreq(self.side_len_x, 1/self.unit_cells_y)
         Mag_fftR = np.real(Mag_fft)
         Mag_fftI = np.imag(Mag_fft)
         Mag_fftA = np.absolute(Mag_fft)
         print(Mag_fft**2)
-        plt.imshow(Mag_fftA)
+        extent = [min(kx), max(kx), min(ky), max(ky)]
+
+        plt.imshow(Mag_fftA, extent = extent)
         plt.colorbar()
         plt.show()
     
