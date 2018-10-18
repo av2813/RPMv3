@@ -59,10 +59,14 @@ def testDumbellvsDipole():
 	ax.set_ylabel('Percentage Difference between Dipole and Dumbbell interaction')
 	ax.set_title(r'Difference between field: y-offset %.0fnm' %(const_y*1e9))
 	plt.show()
-	plt.show()
+
+#testDumbbellvsDipole()
 
 
 def testLattices():
+	'''
+	To check the creation of all the lattices
+	'''
 	squareLattice = rpm.ASI_RPM(20,20)
 	squareLattice.square()
 	squareLattice.graph()
@@ -85,6 +89,9 @@ def testLattices():
 
 
 def graphingTest():
+	'''
+	test all the graphing software
+	'''
 	lattice= rpm.ASI_RPM(20, 20)
 	lattice.square()
 	lattice.graph()
