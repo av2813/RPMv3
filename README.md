@@ -11,10 +11,11 @@ you will need
 
 ##Running the tests
 
+#To Do
 ```
 
 ```
-You have a general class that is referred to as the 
+You have a general class that is referred to as the RPM_ASI which 
 
 
 
@@ -39,3 +40,4 @@ You have a general class that is referred to as the
     - Animation: Can give a field sweep field and it will display an animation of 
                 how the bars flip over the field sweep
 
+#Field Sweep functions
