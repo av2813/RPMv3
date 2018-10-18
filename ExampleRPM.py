@@ -33,7 +33,7 @@ magnetisation = 830e3		#Saturation magnetisation of material in A/m (permalloy i
 
 
 #Lattice Parameters
-size = 100					#Define the size of the lattice
+size = 10					#Define the size of the lattice
 
 #Minor loop Parameters
 
@@ -52,7 +52,7 @@ loops = 6					#The number of minor field loops to be done
 
 #File information
 
-folder = r'C:\Users\alexv\Documents\Work\GitHub\RPMv3'	#The folder for the files to be saved in.
+folder = r'/Users/kilianstenning/Documents/PhD/RPM Code/Data'	#The folder for the files to be saved in.
 
 
 #Define the system
