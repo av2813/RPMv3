@@ -780,6 +780,18 @@ class ASI_RPM():
         else:
             np.savez(os.path.join(folder, file), parameters, fieldloops, q, mag, monopole, vertex)
 
+    def FORC(self, Hmin, Hmax, deltaH, Htheta, n=4, folder = None):
+        M0 = copy.deepcopy(self)
+        testLattice = copy.deepcopy(self.lattice)
+
+        Htheta = np.pi*Htheta/180
+        testLattice[testLattice[:,:,6] == 0] = np.nan
+        Hc_min = np.nanmin(testLattice[:,:,6])
+        x = np.linspace(0, 2*np.pi, 1000)
+        y = -0.5*x*np.sin(x)
+        plt.plot(x, y)
+
+
 
     def appliedFieldSweep(self, Hmin, Hmax, Hsteps, steps, Htheta, n=4, loops=5, folder = None):
         '''
@@ -1189,8 +1201,6 @@ class ASI_RPM():
             return(self.dipole(mag, r0, pos))
         if self.interType == 'dumbbell':
             return(self.dumbbell(mag, r0, pos))
-
-
     
     def Hlocal2(self, x,y,n =1):
         '''
@@ -1226,7 +1236,7 @@ class ASI_RPM():
 
 
 
-    def localFieldHistogram(self, x, y, n, total):
+    def localFieldHistogram(self, x, y, n, total, save = False):
         '''
         Plots a histogram of the local field at position x, y using n radius
         neighbours. Total is the number of times it calculates this and 
@@ -1239,33 +1249,34 @@ class ASI_RPM():
             unit_vector = self.lattice[x,y,3:6]
             field.append(np.dot(np.array(test), unit_vector))
         #print(field)
+        #(mu,sigma)=norm.fit(field)
         fig, ax1 = plt.subplots(1, 1)
-        ax1.hist(field, normed=True, bins=np.linspace(min(field)*1.1,max(field)*1.1, num=101), alpha=1.)
+        bin_number = np.ceil(np.sqrt(total))//2*2+1
+        bins = np.linspace(min(field),max(field), num = bin_number)
+        ax1.hist(field, normed=True, bins=bins, alpha=1.)
+        #fit_hist = mlab.normpdf(bins, mu, sigma)
+        #l = plt.plot(bins, fit_hist, 'r--', linewidth=2)
         ax1.set_ylabel('Count')
         ax1.set_xlabel('Field Strength along axis (T)')
-        ax1.set_title('Dipolar Field - n='+str(n)+' nearest neighbours')
-        plt.show()
-
-    def latticeFieldHistogram(self, n, save = False):
-        '''
-        Calculates the local field at each spin on the lattice and returns a histogram.
-        '''
-        field = []
-        ax1.set_title(r'Random State Dipolar Field - n=%.0f nearest neighbours' %(n))
-        s = '''     mean = %.2E
-            std = %.2E
-            range = %.2E''' %(np.mean(np.array(field)), np.std(np.array(field)), (max(field)-min(field))/2.)
-        plt.figtext(0.6,0.7,s)
+        ax1.set_title(r'Local Field Strength Distribution - n=%.0f nearest neighbours' %(n))
+        #s = '''     mean = %.2E
+        #    std = %.2E
+        #    range = %.2E''' %(mu, sigma, (max(field)-min(field))/2.)
+        #plt.figtext(0.6,0.7,s)
         if save == True:
-            folder = os.getcwd()+r'\\'+self.type+r'_localFieldHistogram_length%.2Ewidth%.2Evgap%.2Ethick%.2E\\' \
+            folder = os.getcwd()+r'\\'+self.type+self.interType+r'_localFieldHistogram_length%.2Ewidth%.2Evgap%.2Ethick%.2E\\' \
             %(self.bar_length, self.bar_width, self.vertex_gap, self.bar_thickness)
             if not os.path.exists(folder):
                 os.makedirs(folder)
-            plt.savefig(folder+r'Histogram_x%.0fy%.0f_n%.0f_total%.0f.png' %(x, y, n, total))
-            plt.savefig(folder+r'Histogram_x%.0fy%.0f_n%.0f_total%.0f.pdf' %(x, y, n, total))
+            filename = os.path.join(folder, r'Histogram_x%.0fy%.0f_n%.0f_total%.0f' %(x, y, n, total))
+            plt.savefig(filename+'.png')
+            plt.savefig(filename+'.svg')
+            np.savetxt(filename+'.csv', field, delimiter = ',')
             plt.close()
         else:
             plt.show()
+        return(field)
+
 
     def effectiveCoercive(self, x, y, n):
         '''
@@ -1354,30 +1365,29 @@ class ASI_RPM():
                     unit_vector = self.lattice[x,y,3:6]
                     field.append(np.dot(np.array(test), unit_vector))
         #print(field)
-        (mu,sigma)=norm.fit(field)
         fig, ax1 = plt.subplots(1, 1)
-        bins = np.linspace(min(field),max(field), num = np.sqrt(len(field)))
+        bin_number = np.ceil(np.sqrt(len(field)))//2*2+1
+        bins = np.linspace(min(field),max(field), num = bin_number)
         ax1.hist(field, normed=True, bins=bins, alpha=1.)
-        y = mlab.normpdf(bins, mu, sigma)
-        l = plt.plot(bins, y, 'r--', linewidth=2)
+        #fit_hist = mlab.normpdf(bins, mu, sigma)
+        #l = plt.plot(bins, fit_hist, 'r--', linewidth=2)
         ax1.set_ylabel('Count')
         ax1.set_xlabel('Field Strength along axis (T)')
-        ax1.set_title('Dipolar Field - n='+str(n)+' nearest neighbours')
-        ax1.set_title(r'Random State Dipolar Field - n=%.0f nearest neighbours' %(n))
-        s = '''     mean = %.2E
-            std = %.2E
-            range = %.2E''' %(mu, sigma, (max(field)-min(field))/2.)
-        plt.figtext(0.6,0.7,s)
+        ax1.set_title(r'Local Field Strength Distribution - n=%.0f nearest neighbours' %(n))
         if save == True:
-            folder = os.getcwd()+r'\\'+self.type+r'_localFieldHistogram_length%.2Ewidth%.2Evgap%.2Ethick%.2E\\' \
+            folder = os.getcwd()+r'\\'+self.type+self.interType+r'_localFieldLatticeHistogram_length%.2Ewidth%.2Evgap%.2Ethick%.2E\\' \
             %(self.bar_length, self.bar_width, self.vertex_gap, self.bar_thickness)
             if not os.path.exists(folder):
                 os.makedirs(folder)
-            plt.savefig(folder+r'Histogram_n%.2E.png' %(n))
+            filename = os.path.join(folder, r'Histogram_n%.0f' %(n))
+            plt.savefig(filename+'.png')
+            plt.savefig(filename+'.svg')
+            np.savetxt(filename+'.csv', field, delimiter = ',')
+            #plt.savefig(folder+r'Histogram_n%.2E.png' %(n))
             plt.close()
         else:
             plt.show()
-        return(mu, sigma, field)
+        return(field)
 
     def vertexHistogram(self):
         '''
@@ -1782,7 +1792,7 @@ class ASI_RPM():
         plt.savefig(os.path.join(folder, 'VertexFieldsteps'))
 
 
-class thermalKMC(ASI_RPM):
+class ASI_thermal(ASI_RPM):
     '''
     To simulate thermal Artificial spin ice
     Still working on it
