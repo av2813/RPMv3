@@ -101,20 +101,20 @@ def graphingTest():
 	lattice.magneticOrdering()
 
 #graphingTest()
-x = np.linspace(0, 100, 10000)
-y = (1-x/100.)*np.cos(x*2*np.pi) 
-h0 = y[0::50]
-hc = []
-hu=[]
-for h00 in h0:
-	for n in np.arange(0, 49, 1):
-		hu.append((y[n]+h00)/2)
-		if h00<0:
-			hc.append(((y[n]-h00)/2))
-		else:
-			hc.append(((y[n]-h00)/2))
-plt.plot(hc, hu, '.')
-plt.show()
-plt.plot(x, y)
-plt.plot(x[0::50],h0, 'o')
-plt.show()
+# x = np.linspace(0, 100, 10000)
+# y = (1-x/100.)*np.cos(x*2*np.pi) 
+# h0 = y[0::50]
+# hc = []
+# hu=[]
+# for h00 in h0:
+# 	for n in np.arange(0, 49, 1):
+# 		hu.append((y[n]+h00)/2)
+# 		if h00<0:
+# 			hc.append(((y[n]-h00)/2))
+# 		else:
+# 			hc.append(((y[n]-h00)/2))
+# plt.plot(hc, hu, '.')
+# plt.show()
+# plt.plot(x, y)
+# plt.plot(x[0::50],h0, 'o')
+# plt.show()
