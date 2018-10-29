@@ -2,7 +2,6 @@
 import matplotlib
 matplotlib.use('TkAgg')
 import rpmClass_Stable as rpm 		#Most recent version of the RPM artificial spin ice code
-
 from importlib import *			#Package to update the version of rpmClass_Stable
 import numpy as np			#Mathematics package
 
@@ -33,7 +32,7 @@ magnetisation = 830e3		#Saturation magnetisation of material in A/m (permalloy i
 
 
 #Lattice Parameters
-size = 10					#Define the size of the lattice
+size = 5					#Define the size of the lattice
 
 #Minor loop Parameters
 
@@ -52,7 +51,7 @@ loops = 6					#The number of minor field loops to be done
 
 #File information
 
-folder = r'/Users/kilianstenning/Documents/PhD/RPM Code/Data'	#The folder for the files to be saved in.
+folder = r'/Users/kilianstenning/Documents/PhD/RPM Code\Hmax-1.7075102839838896'	#The folder for the files to be saved in.
 
 
 #Define the system
@@ -63,11 +62,15 @@ lattice = rpm.ASI_RPM(size,size,bar_length = bar_length, \
         			bar_width = bar_width, magnetisation = magnetisation)
 lattice.square(Hc, Hc_std/100)	#Specify whether it is a square or kagome lattice
 #lattice.kagome(Hc, Hc_std/100)	#example of kagome
-
+#lattice.load(os.path.join(folder,'FinalRPMLattice_Hmax-1p058656e-01_steps5_Angle7p853982e-01_neighbours4_Loops6.npz'))
 #lattice.randomMag()
+lattice.graphCharge()
+plt.show()
 
 #Initiate the minor loop (field sweep)
-folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\MinorLoops\15x15\Happ1p00'
+
+'''
+folder = r''
 file = r'Lattice_Loop7_FieldStrength-87p68mT_Angle0p79.npz'
 for root, dirs, files in os.walk(folder):
 	for file in files:
@@ -83,12 +86,13 @@ filename = os.path.join(folder, file)
 lattice.load(filename)
 lattice.graph()
 plt.show()
-
-lattice.randomMag()
-
-lattice.magneticOrdering()
-plt.show()
 '''
+
+#lattice.randomMag()
+'''
+#lattice.magneticOrdering()
+plt.show()
+
 #Initiate the minor loop (field sweep)
 
 lattice.fieldSweep(Hmax = field_max, steps = steps, \
@@ -113,8 +117,7 @@ lattice.appliedFieldSweep(Hmin = field_min, Hmax = field_max, Hsteps = field_ste
 
 lattice.fieldSweepAnalysis(folder)
 #lattice.correlationMatrix(folder)
-
-
-
-
 '''
+
+
+

@@ -457,9 +457,12 @@ class ASI_RPM():
         self.vertexCharge2()
         grid = self.lattice
         X = grid[:,:,0].flatten()
+        print(grid[:,:,0])
         Y = grid[:,:,1].flatten()
+        print(Y)
         z = grid[:,:,2].flatten()
         Mx = grid[:,:,3].flatten()
+        print(grid[:,:,3])
         My = grid[:,:,4].flatten()
         Mz = grid[:,:,5].flatten()
         Hc = grid[:,:,6].flatten()
