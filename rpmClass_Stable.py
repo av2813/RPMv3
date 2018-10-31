@@ -1071,10 +1071,10 @@ class ASI_RPM():
         return(B)
 
     def dipole(self, m, r, r0):
-        """
+        '''
         Calculate a field in point r created by a dipole moment m located in r0.
         Spatial components are the outermost axis of r and returned B.
-        """
+        '''
         m = np.array(m)
         r = np.array(r)
         r0 = np.array(r0)

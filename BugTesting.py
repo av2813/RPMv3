@@ -60,7 +60,7 @@ def testDumbellvsDipole():
 	ax.set_title(r'Difference between field: y-offset %.0fnm' %(const_y*1e9))
 	plt.show()
 
-#testDumbbellvsDipole()
+testDumbbellvsDipole()
 
 
 def testLattices():

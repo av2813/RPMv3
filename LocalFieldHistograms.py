@@ -26,7 +26,47 @@ def latticeFieldHistogram(lattice, n):
 		fields = lattice.latticeFieldHistogram(test, save = True)
 		lattice.changeinteractionType('dumbbell')
 		fields = lattice.latticeFieldHistogram(test, save = True)
+'''
+folder = os.getcwd()
+number = 75
 
+Lattice = rpm.ASI_RPM(number,number,bar_length = bar_length, vertex_gap = vertex_gap, bar_thickness = bar_thickness, \
+        bar_width = bar_width, magnetisation = magnetisation)
+
+parameters = np.array([bar_length, vertex_gap, bar_thickness, bar_width, magnetisation])
+
+Lattice.square(Hc_mean = Hc, Hc_std=Hc_std)
+width_list = np.linspace(40e-9, 200e-9, 75)
+mu_list=[]
+sigma_list = []
+field_list = []
+print('width')
+for wid in width_list:
+	print(wid)
+	Lattice.changeWidth(wid)
+	Lattice.square(Hc_mean = Hc, Hc_std=Hc_std)
+	Lattice.randomMag()
+	field = Lattice.latticeFieldHistogram(5, save = True)
+	mu_list.append(np.mean(field))
+	sigma_list.append(np.std2(field))
+	field_list.append(field)
+sigma_list = np.array(sigma_list)
+mu_list = np.array(mu_list)
+width_list = np.array(width_list)
+field_list = np.array(field_list)
+figurename = os.path.join(folder, 'HistogramWidth')
+plt.figure()
+plt.plot(width_list*1e-9, mu_list*1e-3, '-o')
+plt.ylabel('Local field average (mT)')
+plt.xlabel('width (nm)')
+plt.savefig(figurename+'Average.png')
+
+plt.figure()
+plt.plot(width_list*1e-9, sigma_list*1e-3, '-o')
+plt.ylabel('Local field standard deviation (mT)')
+plt.xlabel('Width (nm)')
+plt.savefig(figurename+'Std.png')
+'''
 #Define the parameters for the lattice
 Hc = 0.062					#Coercive Field
 Hc_std = 5					#Stanard deviation in the coercive field (as a percentage)
