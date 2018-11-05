@@ -51,7 +51,7 @@ loops = 6					#The number of minor field loops to be done
 
 #File information
 
-folder = r'/Users/kilianstenning/Documents/PhD/RPM Code\Hmax-1.7075102839838896'	#The folder for the files to be saved in.
+folder = r'/Users/kilianstenning/Documents/PhD/RPM Code/Test'	#The folder for the files to be saved in.
 
 
 #Define the system
@@ -60,7 +60,7 @@ folder = r'/Users/kilianstenning/Documents/PhD/RPM Code\Hmax-1.7075102839838896'
 lattice = rpm.ASI_RPM(size,size,bar_length = bar_length, \
 					vertex_gap = vertex_gap, bar_thickness = bar_thickness, \
         			bar_width = bar_width, magnetisation = magnetisation)
-lattice.kagome(Hc, Hc_std/100)	#Specify whether it is a square or kagome lattice
+lattice.square(Hc, Hc_std/100)	#Specify whether it is a square or kagome lattice
 #lattice.kagome(Hc, Hc_std/100)	#example of kagome
 #lattice.load(os.path.join(folder,'FinalRPMLattice_Hmax-1p058656e-01_steps5_Angle7p853982e-01_neighbours4_Loops6.npz'))
 #lattice.randomMag()
@@ -94,12 +94,12 @@ plt.show()
 plt.show()
 
 #Initiate the minor loop (field sweep)
-
+'''
 lattice.fieldSweep(Hmax = field_max, steps = steps, \
 					Htheta = field_angle, n=neighbours, \
 					loops=loops, folder = folder)
 
-
+'''
 
 lattice.fieldSweepAnalysis(folder)		#produces the RPM graphs 
 										#(Correlation, Magnetisation, Monopole density, Vertex percentage)

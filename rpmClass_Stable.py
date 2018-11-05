@@ -40,6 +40,9 @@ class ASI_RPM():
         self.unit_cell_len = (bar_length+vertex_gap)/2
         self.interType = 'dumbbell'
 
+    def mfmLoad(self, Mx, My):
+        self.lattice[:,:,3] = Mx
+        self.lattice[:,:,4] = My
 
     def save(self, file, folder = os.getcwd()):
         '''
@@ -197,24 +200,24 @@ class ASI_RPM():
         for x in range(0, self.side_len_x):
             for y in range(0, self.side_len_y):
                 if x%2!=0 and y%2==0:
-                    if (x-1)%4==0 and (y-2)%4==0:
+                    if (x-1)%4==0 and (y)%4==0:
                         if y%(self.side_len_y-1)!=0:
                             grid[x+1,y] = np.array([xfactor*(x+test)*self.unit_cell_len,(y)*self.unit_cell_len,0.,0.,0.,0.,0.,0, 0])
                             grid[x-1,y] = np.array([xfactor*(x-test)*self.unit_cell_len,(y)*self.unit_cell_len,0.,0.,0.,0.,0.,0, 0])
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,(y)*self.unit_cell_len,0.,1.,0.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0, None])
-                    elif (x-3)%4==0 and (y)%4==0:
+                    elif (x-3)%4==0 and (y+2)%4==0:
                         if y%(self.side_len_y-1)!=0:
                             grid[x+1,y] = np.array([xfactor*(x+test)*self.unit_cell_len,(y)*self.unit_cell_len,0.,0.,0.,0.,0.,0, 0])
                             grid[x-1,y] = np.array([xfactor*(x-test)*self.unit_cell_len,(y)*self.unit_cell_len,0.,0.,0.,0.,0.,0, 0])
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,y*self.unit_cell_len,0.,1.,0.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                     else:
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,y*self.unit_cell_len,0.,0,0,0,0,0,None])
-                elif x%2 ==0 and (y-1)%4==0:
+                elif x%2 ==0 and (y+1)%4==0:
                     if x%4==0:
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,yfactor*y*self.unit_cell_len,0.,0.5,(3**0.5/2),0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                     else:
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,yfactor*y*self.unit_cell_len,0.,-0.5,(3**0.5/2),0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
-                elif x%2 ==0 and (y-3)%4==0:
+                elif x%2 ==0 and (y-1)%4==0:
                     if x%4==0:
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,yfactor*y*self.unit_cell_len,0.,-0.5,(3**0.5/2),0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                     else:
@@ -222,6 +225,7 @@ class ASI_RPM():
                 else:
                     if np.array_equal(grid[x,y,0:2], [0., 0.]):
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,y*self.unit_cell_len,0.,0,0,0,0,0,None])
+
         self.lattice = grid
 
 
