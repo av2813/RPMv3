@@ -1674,6 +1674,7 @@ class ASI_RPM():
         Plots the magnetisation, correlation, monopole density, and vertex population
         graphs for the summary data
         '''
+        print("Allgood")
         parameters_list = []
         Hmax_list,Htheta_list, steps_list, n_list, loops_list = [],[],[],[],[]
         Hc_list = []
