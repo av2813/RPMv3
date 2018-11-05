@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 #Material Parameters
 
 Hc = 0.062					#Coercive Field (T)
+Hc = 0.065					#Coercive Field (T)
 Hc_std = 5					#Stanard deviation in the coercive field (as a percentage)
 bar_length = 400e-9			#Bar length in m
 vertex_gap = 100e-9			#Vertex gap in m
@@ -52,7 +53,6 @@ loops = 6					#The number of minor field loops to be done
 
 #File information
 
-folder = r'C:\Users\alexv\Documents\Work\GitHub\RPMv3'	#The folder for the files to be saved in.
 
 
 #Define the system
@@ -64,7 +64,6 @@ lattice = rpm.ASI_RPM(size,size,bar_length = bar_length, \
 lattice.square(Hc, Hc_std/100)	#Specify whether it is a square or kagome lattice
 #lattice.kagome(Hc, Hc_std/100)	#example of kagome
 
-#lattice.randomMag()
 
 #Initiate the minor loop (field sweep)
 folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\MinorLoops\15x15\Happ1p00'

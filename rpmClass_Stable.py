@@ -1700,12 +1700,12 @@ class ASI_RPM():
                     q_list.append(npzfile['arr_2'])
                     mag_list.append(npzfile['arr_3'])
                     monopole_list.append(npzfile['arr_4'])
-                    vertex_list.append(npzfile['arr_5'])
+                   #vertex_list.append(npzfile['arr_5'])
         for Hmax, loops, steps, q, mag, monopole, vertex in zip(Hmax_list, \
                         loops_list, steps_list, q_list, mag_list, monopole_list, vertex_list):
             self.plotCorrelation(folder, q, Hmax, loops, steps)
             self.plotMagnetisation(folder, mag, Hmax, loops, steps)
-            #self.plotMonopole(folder, monopole, Hmax, loops, steps)
+            self.plotMonopole(folder, monopole, Hmax, loops, steps)
             #self.plotVertex(folder, vertex, Hmax, loops, steps)
         plt.show()
 
