@@ -9,7 +9,7 @@ reload(rpm)
 sns.set_style("ticks")
 sns.set_palette("colorblind")
 
-def testDumbellvsDipole():
+def testDumbbellvsDipole():
 	'''
 	To test the difference between the dumbbell and the dipole model
 	'''
@@ -60,7 +60,7 @@ def testDumbellvsDipole():
 	ax.set_title(r'Difference between field: y-offset %.0fnm' %(const_y*1e9))
 	plt.show()
 
-testDumbbellvsDipole()
+#testDumbbellvsDipole()
 
 
 def testLattices():
@@ -73,6 +73,9 @@ def testLattices():
 	kagomeLattice = rpm.ASI_RPM(20,20)
 	kagomeLattice.kagome()
 	kagomeLattice.graph()
+	lattice = rpm.ASI_RPM(20,20)
+	lattice.squareEdges()
+	lattice.graph()
 	tetrisLattice = rpm.ASI_RPM(10,10)
 	tetrisLattice.tetris()
 	tetrisLattice.graph()
@@ -100,6 +103,38 @@ def graphingTest():
 	lattice.vertexTypeMap()
 	lattice.magneticOrdering()
 
+def testDemag():
+	lattice = rpm.ASI_RPM(20,20)
+
+	lattice.squareEdges()
+	lattice.fixEdges()
+	lattice.squareGroundState()
+
+	lattice.changeHc(11, 12, 1.)
+	lattice.flipSpin(11, 12)
+	lattice.changeHc(23, 26, 1.)
+	lattice.flipSpin(23, 26)
+	lattice.changeHc(19, 34, 1.)
+	lattice.flipSpin(19, 34)
+	lattice.changeHc(25, 9, 1.)
+	lattice.flipSpin(25, 9)
+	lattice.demagnetisationProtocol()
+	lattice.graph()
+	lattice.vertexTypeMap()
+	lattice.graphCharge()
+	lattice.magneticOrdering()
+
+lattice = rpm.ASI_RPM(20,20)
+lattice.squareEdges()
+lattice.fixEdges()
+lattice.squareGroundState()
+lattice.structureFactor()
+#lattice.makeMonopole(13, 13, charge = 1, fixed = True)
+#lattice.makeMonopole(25,25, charge = -1, fixed = True)
+#lattice.graphCharge()
+#lattice.demagnetisationProtocol()
+
+#lattice.demagnetisationProtocol2()
 #graphingTest()
 # x = np.linspace(0, 100, 10000)
 # y = (1-x/100.)*np.cos(x*2*np.pi) 

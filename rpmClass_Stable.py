@@ -19,7 +19,7 @@ class ASI_RPM():
     Class for initialising the lattice be performing field sweeps, mainly
     return point memory
     '''
-    def __init__(self, unit_cells_x, unit_cells_y, lattice = None, \
+    def __init__(self, unit_cells_x=25, unit_cells_y=25, lattice = None, \
         bar_length = 220e-9, vertex_gap = 1e-7, bar_thickness = 25e-9, \
         bar_width = 80e-9, magnetisation = 800e3):
         self.lattice = lattice
@@ -138,6 +138,29 @@ class ASI_RPM():
                         grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,1.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                 else:
                     if x%2 ==0 and x!=0 and y!=0 and x!=self.side_len_x-1 and y!=self.side_len_x-1:
+                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,0.,0.,0,0,0])
+                    else:
+                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,0.,0.,0,0,None])
+        self.lattice = grid
+
+    def squareEdges(self, Hc_mean = 0.05, Hc_std = 0.05):
+        self.type = 'square'
+        self.Hc = Hc_mean                #Unit cell direction in x andy y
+        self.Hc_std = Hc_std
+        self.side_len_x = 2*self.unit_cells_x+1
+        self.side_len_y = 2*self.unit_cells_y+1
+        grid = np.zeros((self.side_len_x, self.side_len_y, 9))        
+        for x in range(0, self.side_len_x):
+            for y in range(0, self.side_len_y):
+                if (x+y)%2 != 0:
+                    if y%2 == 0:
+                        xpos = x*(self.bar_length+self.vertex_gap)/2
+                        ypos = y*(self.bar_length+self.vertex_gap)/2
+                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,1.,0., np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
+                    else:
+                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,1.,0.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
+                else:
+                    if (x-1)%2 ==0 and x!=0 and y!=0 and x!=self.side_len_x-1 and y!=self.side_len_x-1:
                         grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,0.,0.,0,0,0])
                     else:
                         grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,0.,0.,0,0,None])
@@ -919,8 +942,7 @@ class ASI_RPM():
         ax = fig.add_subplot(111)
         heatmap = ax.pcolor(statecode*1000, statecode*1000,corr_list)
         plt.xlabel('Microstate for Minor Loop with maximum applied field (mT)')
-        plt.ylabel('Microstate for Minor Loop with maximum applied field (mT)')       
-
+        plt.ylabel('Microstate for Minor Loop with maximum applied field (mT)')
         plt.colorbar(heatmap)
         plt.title('Correlation between all final states')
         fig = plt.figure()
@@ -1646,6 +1668,39 @@ class ASI_RPM():
         '''
         return(self.lattice)
 
+    def correlationLoop(self, latticeList1, latticeList2):
+        '''
+        '''
+        corr_list = []
+        for l1, l2 in zip(latticeList1, latticeList2):
+            corr_list.append(self.correlation(l1, l2))
+        return(corr_list)
+
+    def demagnetisationProtocol(self, number = 50):
+        Hc_min = np.nanmin(self.lattice[:,:,6])
+        #Hc_max = np.nanmax(self.lattice[:,:,6])
+        fieldStrength = np.linspace(2.*self.Hc, Hc_min, number)
+        #fieldStrength = fieldStrength*np.array([np.cos])
+        for H in fieldStrength:
+            for x in np.arange(0, 5):
+                angle = 2.*np.pi*np.random.random()
+                fieldApplied = ((-1)**x)*H*np.array([np.cos(angle), np.sin(angle), 0.])
+                self.relax(fieldApplied, n = 4)
+            #self.graph()
+
+    def demagnetisationProtocol2(self, number = 1000):
+        Hc_min = np.nanmin(self.lattice[:,:,6])
+        print(Hc_min)
+        fieldStrength = np.linspace(2.*self.Hc, 0.7*self.Hc, number)
+        angles = np.linspace(0., (number/10+np.random.random())*np.pi, number)
+        print(np.array([np.cos(angles), np.sin(angles), np.zeros((number))]))
+        fields = np.multiply(np.array([fieldStrength,fieldStrength,fieldStrength]), np.array([np.cos(angles), np.sin(angles),  np.zeros((number))]))
+        print(fields)
+        plt.figure()
+        plt.plot(fields[0, :])
+        plt.plot(fields[1, :])
+        plt.show()
+
     '''
     Change the parameters using these functions
     '''
@@ -1773,6 +1828,87 @@ class ASI_RPM():
         plt.legend()
         plt.savefig(os.path.join(folder, 'MonopoleFieldsteps'))
 
+    def changeHc(self, x, y, Hc):
+        self.lattice[x,y,6] = Hc
+
+    def makeMonopole(self, x, y, charge = 1, fixed = False, Hc_fix = 1):
+        if charge == 1:
+            self.lattice[x-1,y, 3:6] = np.array([1., 0., 0.])
+            self.lattice[x+1,y, 3:6] = np.array([-1., 0., 0.])
+            self.lattice[x,y-1, 3:6] = np.array([0., 1., 0.])
+            self.lattice[x,y+1, 3:6] = np.array([0., -1., 0.])
+            if fixed == True:
+                self.lattice[x-1,y, 6] = Hc_fix
+                self.lattice[x+1,y, 6] = Hc_fix
+                self.lattice[x,y-1, 6] = Hc_fix
+                self.lattice[x,y+1, 6] = Hc_fix
+        if charge == -1:
+            self.lattice[x-1,y, 3:6] = np.array([-1., 0., 0.])
+            self.lattice[x+1,y, 3:6] = np.array([1., 0., 0.])
+            self.lattice[x,y-1, 3:6] = np.array([0., -1., 0.])
+            self.lattice[x,y+1, 3:6] = np.array([0., 1., 0.])
+            if fixed == True:
+                self.lattice[x-1,y, 6] = Hc_fix
+                self.lattice[x+1,y, 6] = Hc_fix
+                self.lattice[x,y-1, 6] = Hc_fix
+                self.lattice[x,y+1, 6] = Hc_fix
+
+    def structureFactor(self):
+        structureFact = np.zeros((100, 100, self.side_len_x, self.side_len_y))
+        qx_list = np.linspace(-2*np.pi, 2*np.pi, 100)
+        qy_list = np.linspace(-2*np.pi, 2*np.pi, 100)
+        test_st = np.zeros((100, 100))
+        for qx in np.arange(0, 99):
+            for qy in np.arange(0, 99):
+                st_fact = 0
+                for x in np.arange(0, self.side_len_x-1):
+                    for y in np.arange(0, self.side_len_y-1):
+                        print()
+                        structureFact[qx, qy, x, y] = np.dot(self.lattice[x,y,3:5], self.lattice[x,y,3:5])*np.complex(np.cos(np.dot(np.array([qx_list[qx], qy_list[qy]]), (self.lattice[0:2]-self.lattice[0:2]))), np.sin(np.dot(np.array([qx_list[qx], qy_list[qy]]), (self.lattice[0:2]-self.lattice[0:2]))))
+                        st_fact+=np.dot(self.lattice[x,y,3:5], self.lattice[x,y,3:5])*np.complex(np.cos(np.dot(np.array([qx_list[qx], qy_list[qy]]), (self.lattice[0:2]-self.lattice[0:2]))), np.sin(np.dot(np.array([qx_list[qx], qy_list[qy]]), (self.lattice[0:2]-self.lattice[0:2]))))
+                test_st[qx, qy] = st_fact
+        plt.figure()
+        plt.imshow(test_st)
+        plt.show()
+        
+
+    def squareMonopoleState(self):
+        #self.square()
+        for x in np.arange(0, self.side_len_x):
+            for y in np.arange(0, self.side_len_y):
+                if self.lattice[x,y,6]!=0:
+                    if (x+y-1)%4 != 0:
+                        self.flipSpin(x,y)
+
+    def squareGroundState(self):
+        #self.square()
+        for x in np.arange(0, self.side_len_x):
+            for y in np.arange(0, self.side_len_y):
+                if self.lattice[x,y,6]!=0:
+                    #print(x+y-1)
+                    if (y)%4 == 0 and (x-1)%4==0:
+                        self.flipSpin(x,y)
+                    if (y-1)%4==0 and (x-2)%4==0:
+                        self.flipSpin(x,y)
+                    if (y-2)%4==0 and (x-3)%4==0:
+                        self.flipSpin(x,y)
+                    if (y-3)%4==0 and x%4==0:
+                        self.flipSpin(x,y)
+
+    def flipAll(self):
+        for x in np.arange(0, self.side_len_x):
+            for y in np.arange(0, self.side_len_y):
+                if self.lattice[x,y,6]!=0:
+                    self.flipSpin(x,y)
+
+    def fixEdges(self):
+        self.lattice[0, :, 6] = 1.
+        self.lattice[self.side_len_x-1, :, 6] = 1.
+        self.lattice[:, 0, 6] = 1.
+        self.lattice[:, self.side_len_y-1, 6] = 1.
+
+
+
     def plotVertex(self, folder, vertex, Hmax, loops, steps):
         '''
         Plots the vertex type percentage through the field sweep as a function
@@ -1795,15 +1931,34 @@ class ASI_RPM():
 class ASI_thermal(ASI_RPM):
     '''
     To simulate thermal Artificial spin ice
-    Still working on it
     '''
-    def __init__(self, temp, K_ani, rate0, Happ, Htheta, n = 3):
+    def __init__(self,unit_cells_x, unit_cells_y, lattice = None, \
+        bar_length = 220e-9, vertex_gap = 1e-7, bar_thickness = 25e-9,\
+         bar_width = 80e-9, magnetisation = 800e3, temp = 300, K_ani=1000, rate0=1e12, Happ=0., Htheta=0., n = 3):
         self.temp = temp
         self.K_ani = K_ani
         self.rate0 = rate0
         self.Happ = Happ
         self.Htheta = Htheta
         self.n = n
+        self.lattice = lattice
+        self.type = None
+        self.Hc = None
+        self.Hc_std = None
+        self.previous = None
+        self.unit_cells_x = unit_cells_x
+        self.unit_cells_y = unit_cells_y
+        self.side_len_x = None      #The side length is now defined in the square lattice
+        self.side_len_y = None
+        self.bar_length = bar_length
+        self.vertex_gap = vertex_gap
+        self.bar_width = bar_width
+        self.bar_thickness = bar_thickness
+        self.width = bar_width
+        self.magnetisation = magnetisation
+        self.unit_cell_len = (bar_length+vertex_gap)/2
+        self.interType = 'dumbbell'
+        
 
     def changeTemp(self, temp_new):
         self.temp = temp_new
@@ -1826,9 +1981,9 @@ class ASI_thermal(ASI_RPM):
 
     def demagEnergy(self,x,y):
         fieldApplied = self.Happ*np.array([np.cos(self.Htheta), np.sin(self.Htheta), 0.])
-        fieldLocal = self.Hlocal(x,y, self.n)
+        fieldLocal = self.Hlocal2(x,y, self.n)
         field = fieldLocal+fieldApplied
-        demag = -1*4e-7*np.pi*np.dot(self.lattice[x,y,3:6], field)
+        demag = -1*4e-7*np.pi*self.magnetisation*self.bar_width*self.bar_thickness*self.bar_length*np.dot(self.lattice[x,y,3:6], field)
         return(demag)
 
     def demagEnergyDiff(self, x, y):
@@ -1844,29 +1999,74 @@ class ASI_thermal(ASI_RPM):
 
     def flipProb(self, x,y):
         thermal_energy = np.sum(self.thermalEnergy())
-        deltaE = np.sum(self.anisotropyEnergy(),self.demagEnergyDiff(x,y))
+        demagE = self.demagEnergyDiff(x,y)
+        deltaE = self.anisotropyEnergy()+demagE
+        print(demagE, deltaE, thermal_energy)
         prob = np.exp(-deltaE/thermal_energy)
-        return(self.rate0*prob)
+        print(deltaE, thermal_energy, self.rate0*prob, prob)
+        return(self.rate0*prob, demagE)
 
-    def thermalMC(self, rate0):
+    def thermalMC(self):
         positions = []
-        rates = np.zeros((self.side_len_x, self.side_len_y))
+        rates_lattice = np.zeros((self.side_len_x, self.side_len_y, 2))
         for x in np.arange(0, self.side_len_x):
             for y in np.arange(0, self.side_len_y):
                 if abs(self.lattice[x,y,6]) != 0:
-                    rate = self.flipProb(x,y)
-       
+                    rate, demagE = self.flipProb(x,y)
+                    rates_lattice[x, y, 0] = rate
+                    rates_lattice[x, y, 1] = demagE
+        total_rate = np.sum(rates_lattice)
+        triedList = []
+        rate_now = []
+        total_prev = 0.
+        time_list = []
+        flipped = False
+        while flipped == False:
+            x = np.random.randint(0, self.side_len_x)
+            y = np.random.randint(0, self.side_len_y)
+            if [x,y] not in triedList:
+                if abs(self.lattice[x,y,6]) != 0:
+                    rate_now.append(rates_lattice[x,y,0])
+                    print(total_rate)
+                    total_curr = np.sum(rate_now)
+                    rand_number = np.random.rand()
+                    if total_prev <= rand_number*total_rate and total_curr >= rand_number*total_rate:
+                        self.flipSpin(x, y)
+                        x1 = x - self.n
+                        x2 = x + self.n + 1
+                        y1 = y - self.n
+                        y2 = y + self.n + 1
+                        if x1<0:
+                            x1 = 0
+                        if x2>self.side_len_x:
+                            x2 = self.side_len_x -1
+                        if y1<0:
+                            y1 = 0
+                        if y2>self.side_len_y-1:
+                            y2 = self.side_len_y-1
+                        grid = self.lattice[x1:x2,y1:y2,:]
+                        for x_temp in np.arange(x1,x2):
+                            for y_temp in np.arange(y1, y2):
+                                if abs(self.lattice[x_temp,y_temp,6]) != 0:
+                                    rate, demagE = self.flipProb(x_temp,y_temp)
+                                    rates_lattice[x_temp, y_temp, 0] = rate
+                                    rates_lattice[x_temp, y_temp, 1] = demagE
+                        time_list.append((1./total_rate)*np.log(1./rand_number))
+                        print(time_list)
+                        print(np.sum(time_list))
+                        print('-----')
+                        flipped = True
+                    total_prev = total_curr
+                    print('-------------------------------')
 
-
-
-
-
-
-
-
-        
-
-
+#lattice = ASI_RPM(10,10)
+#lattice.kagome()
+#folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\Kagome_InitialStates\97Hc'
+#lattice.searchRPM_monte(50, 0.97, Htheta = 30, steps =10, n=3,loops=5, folder = folder)
+#unit_cells_x, unit_cells_y, lattice = None, bar_length = 220e-9, vertex_gap = 1e-7, bar_thickness = 25e-9, bar_width = 80e-9, magnetisation = 800e3
+#thermal = ASI_thermal(25,25)
+#thermal.square()
+#thermal.thermalMC()
 
 '''
 Hc = 0.062
