@@ -11,6 +11,7 @@ import os
 from scipy.stats import norm
 import matplotlib.animation as pla
 import matplotlib.mlab as mlab
+import numdifftools as nd
 
 
 
@@ -60,7 +61,7 @@ class ASI_RPM():
         '''
         npzfile = np.load(file)
         parameters = npzfile['arr_1']
-        print(len(parameters))
+        #print(len(parameters))
         self.unit_cells_x = np.int(parameters[0])
         self.unit_cells_y = np.int(parameters[1])
         self.bar_length = np.float(parameters[2])
@@ -732,8 +733,7 @@ class ASI_RPM():
             else:
                 unrelaxed = False
             self.lattice = grid
-    
-    
+
     def fieldSweep(self, Hmax, steps, Htheta, n=10, loops=1, folder = None, q1 = False):
         '''
         Sweeps through from 90% of the minimum Coercive field to Hmax at angle Htheta in steps. 
@@ -744,11 +744,14 @@ class ASI_RPM():
         '''
         M0 = copy.deepcopy(self)
         testLattice = copy.deepcopy(self.lattice)
-
         Htheta = np.pi*Htheta/180
         testLattice[testLattice[:,:,6] == 0] = np.nan
-        Hc_min = np.nanmin(testLattice[:,:,6])
-        
+        if np.sin(Htheta)==0:
+            angleFactor = np.cos(Htheta)
+        else:
+            angleFactor = np.sin(Htheta)
+        Hc_min = np.nanmin(testLattice[:,:,6])/angleFactor
+
         q = []
         mag = []
         monopole = []
@@ -803,18 +806,128 @@ class ASI_RPM():
         else:
             np.savez(os.path.join(folder, file), parameters, fieldloops, q, mag, monopole, vertex)
 
-    def FORC(self, Hmin, Hmax, deltaH, Htheta, n=4, folder = None):
-        M0 = copy.deepcopy(self)
+    def FORC2(self, Hmax, steps, Htheta, n = 4, folder = None):
         testLattice = copy.deepcopy(self.lattice)
-
         Htheta = np.pi*Htheta/180
         testLattice[testLattice[:,:,6] == 0] = np.nan
-        Hc_min = np.nanmin(testLattice[:,:,6])
-        x = np.linspace(0, 2*np.pi, 1000)
-        y = -0.5*x*np.sin(x)
+        if np.sin(Htheta)==0:
+            angleFactor = np.cos(Htheta)
+        else:
+            angleFactor = np.sin(Htheta)
+        Hmax = Hmax/angleFactor
+        x = np.linspace(0, 1, steps)
+        y = 2*Hmax*(-x+1)-Hmax
         plt.plot(x, y)
+        plt.show()
+        Happ_list = np.array([])
+        for i in np.arange(0,steps):
+            Happ_list = np.append(Happ_list, y[i:])
+        plt.plot(Happ_list, 'o')
+        plt.show()
+        mag  = []
+        monopole = []
+        energy = []
+        fieldloops = []
+        counter = 0
+        test = np.zeros((steps, steps))
+        
+        for Happ in Happ_list:
+            print(Happ)
+            Happlied = Happ*np.array([np.cos(Htheta),np.sin(Htheta), 0.])
+            self.relax(Happlied,n)
+            fieldloops.append(Happlied)
+            mag.append(self.netMagnetisation())
+            monopole.append(self.monopoleDensity())
+            energy.append(self.demagEnergy(n))
+            if folder == None:
+                self.save('FORCLattice_counter%(counter)d_FieldApplied%(Happ)e_Angle%(Htheta)e' % locals())
+            else:
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+                self.save('FORCLattice_counter%(counter)d_FieldApplied%(Happ)e_Angle%(Htheta)e' % locals(), folder = folder)
+            counter+=1
+        self.save('FinalFORCLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d' % locals(), folder = folder)
+        fieldloops = np.array(fieldloops)
+        mag = np.array(mag)
+        monopole = np.array(monopole)
+        energy = np.array(energy)
+        nd.Derivative()
+        file = 'FORCStateInfo_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d' % locals()
+        parameters = np.array([Hmax, steps, Htheta, n, self.Hc, self.Hc_std])
+        print(parameters)
+
+        if folder == None:
+            folder = os.getcwd()
+            np.savez(os.path.join(folder, file), parameters, fieldloops, mag, monopole, energy)
+        else:
+            np.savez(os.path.join(folder, file), parameters, fieldloops, mag, monopole, energy)
 
 
+    def FORC(self, Hmax, steps, Htheta, n=4, folder = None):
+        #M0 = copy.deepcopy(self)
+        #testLattice = copy.deepcopy(self.lattice)
+
+        #Htheta = np.pi*Htheta/180
+        #testLattice[testLattice[:,:,6] == 0] = np.nan
+        #Hc_min = np.nanmin(testLattice[:,:,6])
+        #steps = 1000
+        #Hmax = 0.1
+
+        testLattice = copy.deepcopy(self.lattice)
+        Htheta = np.pi*Htheta/180
+        testLattice[testLattice[:,:,6] == 0] = np.nan
+        if np.sin(Htheta)==0:
+            angleFactor = np.cos(Htheta)
+        else:
+            angleFactor = np.sin(Htheta)
+        Hmax = Hmax/angleFactor
+        Hc_min = 0.95*np.nanmin(testLattice[:,:,6])/angleFactor
+        print(Hmax, Hc_min)
+        x = np.linspace(0, 1, 2*steps+1)
+        y = (Hmax-Hc_min)*(-x+1)*np.cos(steps*x*(2*np.pi))
+        new_y = []
+        for test in y:
+            if test>0:
+                new_y.append(test+Hc_min)
+            else:
+                new_y.append(test-Hc_min)
+        #plt.plot(x, new_y, '.')
+        #plt.show()
+        Happ_list = new_y
+        mag  = []
+        monopole = []
+        energy = []
+        fieldloops = []
+        counter = 0
+        for Happ in Happ_list:
+            print(Happ)
+            Happlied = Happ*np.array([np.cos(Htheta),np.sin(Htheta), 0.])
+            self.relax(Happlied,n)
+            fieldloops.append(Happlied)
+            mag.append(self.netMagnetisation())
+            monopole.append(self.monopoleDensity())
+            energy.append(self.demagEnergy(n))
+            if folder == None:
+                self.save('FORCLattice_counter%(counter)d_FieldApplied%(Happ)e_Angle%(Htheta)e' % locals())
+            else:
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+                self.save('FORCLattice_counter%(counter)d_FieldApplied%(Happ)e_Angle%(Htheta)e' % locals(), folder = folder)
+            counter+=1
+        self.save('FinalFORCLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d' % locals(), folder = folder)
+        fieldloops = np.array(fieldloops)
+        mag = np.array(mag)
+        monopole = np.array(monopole)
+        energy = np.array(energy)
+        file = 'FORCStateInfo_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d' % locals()
+        parameters = np.array([Hmax, steps, Htheta, n, self.Hc, self.Hc_std])
+        print(parameters)
+
+        if folder == None:
+            folder = os.getcwd()
+            np.savez(os.path.join(folder, file), parameters, fieldloops, mag, monopole, energy)
+        else:
+            np.savez(os.path.join(folder, file), parameters, fieldloops, mag, monopole, energy)
 
     def appliedFieldSweep(self, Hmin, Hmax, Hsteps, steps, Htheta, n=4, loops=5, folder = None):
         '''
@@ -827,7 +940,7 @@ class ASI_RPM():
             else:
                 newfolder = folder+'\\Hmax'+str(H/self.Hc)+'\\'
             print(folder)
-            self.fieldSweep(H, steps, Htheta, n=n, loops = loops, folder = newfolder, q1 = True)
+            self.fieldSweep(H, steps, Htheta, n=n, loops = loops, folder = newfolder, q1 = False)
         np.savez(os.path.join(folder, 'StateCode'), np.array(Hrange))
 
     def searchRPM_monte(self, samples, Hmax, Htheta = 45, steps =10, n=3,loops=4, folder = None):
@@ -1686,6 +1799,7 @@ class ASI_RPM():
                 angle = 2.*np.pi*np.random.random()
                 fieldApplied = ((-1)**x)*H*np.array([np.cos(angle), np.sin(angle), 0.])
                 self.relax(fieldApplied, n = 4)
+            print(self.demagEnergy(3))
             #self.graph()
 
     def demagnetisationProtocol2(self, number = 1000):
@@ -1853,22 +1967,51 @@ class ASI_RPM():
                 self.lattice[x,y-1, 6] = Hc_fix
                 self.lattice[x,y+1, 6] = Hc_fix
 
-    def structureFactor(self):
-        structureFact = np.zeros((100, 100, self.side_len_x, self.side_len_y))
-        qx_list = np.linspace(-2*np.pi, 2*np.pi, 100)
-        qy_list = np.linspace(-2*np.pi, 2*np.pi, 100)
-        test_st = np.zeros((100, 100))
-        for qx in np.arange(0, 99):
-            for qy in np.arange(0, 99):
-                st_fact = 0
+    def structureFactor(self, qlow, qhigh, number):
+        structureFact = np.zeros((number, number, self.side_len_x, self.side_len_y))
+        qx_list = np.linspace(qlow, qhigh, number)
+        qy_list = np.linspace(qlow, qhigh, number)
+        test_st = np.zeros((number, number))
+        N = np.count_nonzero(self.lattice[:,:, 6])
+
+        for qx in np.arange(0, number-1):
+            for qy in np.arange(0, number-1):
+                stfact_A = 0
+                stfact_B = 0
                 for x in np.arange(0, self.side_len_x-1):
                     for y in np.arange(0, self.side_len_y-1):
-                        print()
-                        structureFact[qx, qy, x, y] = np.dot(self.lattice[x,y,3:5], self.lattice[x,y,3:5])*np.complex(np.cos(np.dot(np.array([qx_list[qx], qy_list[qy]]), (self.lattice[0:2]-self.lattice[0:2]))), np.sin(np.dot(np.array([qx_list[qx], qy_list[qy]]), (self.lattice[0:2]-self.lattice[0:2]))))
-                        st_fact+=np.dot(self.lattice[x,y,3:5], self.lattice[x,y,3:5])*np.complex(np.cos(np.dot(np.array([qx_list[qx], qy_list[qy]]), (self.lattice[0:2]-self.lattice[0:2]))), np.sin(np.dot(np.array([qx_list[qx], qy_list[qy]]), (self.lattice[0:2]-self.lattice[0:2]))))
-                test_st[qx, qy] = st_fact
+                        if self.lattice[x,y,6]!=0:
+                            #st_fact1+=self.lattice[x,y,3:5]
+                            q_vec = np.array([qx_list[qx], qx_list[qy]])
+                            if np.all(q_vec!=np.array([0, 0]))==True:
+                                q_norm = q_vec/np.linalg.norm(q_vec)
+                            else:
+                                q_norm = q_vec
+                            S = self.lattice[x,y,3:5]
+                            #print(S, q_vec, q_norm)
+                            S_perp = np.subtract(S, np.dot(q_norm, S)*q_norm)
+                            #print(S_perp)
+                            stfact_A+=S_perp*np.cos(np.dot(q_vec, self.lattice[x,y, 0:2]))
+                            stfact_B+=S_perp*np.sin(np.dot(q_vec, self.lattice[x,y, 0:2]))
+                            #new_stfact+= (S_perp*np.cos(np.dot(q_vec, self.lattice[x,y, 0:2])))**2 + (S_perp*np.sin(np.dot(q_vec, self.lattice[x,y, 0:2])))**2
+                            #st_fact1 += np.complex(S_perp*np.cos(np.dot(q_vec, self.lattice[x,y, 0:2])), S_perp*np.sin(np.dot(q_vec, self.lattice[x,y, 0:2])))
+                            #st_fact2 += np.complex(S_perp*np.cos(np.dot(q_vec, self.lattice[x,y, 0:2])), S_perp*np.sin(np.dot(q_vec, self.lattice[x,y, 0:2])))
+                            #print(np.dot(self.lattice[x,y,3:5], self.lattice[x,y,3:5]))
+                            #print(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2]))
+                            #print(np.array([qx_list[qx], qy_list[qy]]))
+                            #print(self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])
+                            #print(np.cos(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])))
+                            #print(np.sin(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])))
+                            #structureFact[qx, qy, x, y] = np.dot(self.lattice[x,y,3:5], self.lattice[x,y,3:5])*np.complex(np.cos(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])), np.sin(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])))
+                            #st_fact+=np.dot(self.lattice[x,y,3:5], self.lattice[x,y,3:5])*np.complex(np.cos(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])), np.sin(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])))
+                #print(N, stfact_A, stfact_B)
+                test_st[qx, qy] = (1/N)*((stfact_A**2).sum()+(stfact_B**2).sum())
+        extent = [min(qx_list), max(qx_list), min(qy_list), max(qy_list)]
         plt.figure()
-        plt.imshow(test_st)
+        plt.imshow(test_st, extent = extent)
+        plt.colorbar()
+        plt.xlabel(r'q_{x} (r.l.u)')
+        plt.ylabel(r'q_{y} (r.l.u)')
         plt.show()
         
 
@@ -1884,15 +2027,22 @@ class ASI_RPM():
         #self.square()
         for x in np.arange(0, self.side_len_x):
             for y in np.arange(0, self.side_len_y):
-                if self.lattice[x,y,6]!=0:
+                if self.lattice[x,y,6] != 0:
                     #print(x+y-1)
-                    if (y)%4 == 0 and (x-1)%4==0:
+                    if (y)%4 == 0 and (x-1)%4 == 0:
                         self.flipSpin(x,y)
-                    if (y-1)%4==0 and (x-2)%4==0:
+                    if (y-1)%4 == 0 and (x-2)%4 == 0:
                         self.flipSpin(x,y)
-                    if (y-2)%4==0 and (x-3)%4==0:
+                    if (y-2)%4 == 0 and (x-3)%4 == 0:
                         self.flipSpin(x,y)
-                    if (y-3)%4==0 and x%4==0:
+                    if (y-3)%4 == 0 and x%4 == 0:
+                        self.flipSpin(x,y)
+
+    def squareType3State(self):
+        for x in np.arange(0, self.side_len_x):
+            for y in np.arange(0, self.side_len_y):
+                if self.lattice[x,y,6] != 0:
+                    if (x-1)%4 == 0:
                         self.flipSpin(x,y)
 
     def flipAll(self):
@@ -1907,6 +2057,17 @@ class ASI_RPM():
         self.lattice[:, 0, 6] = 1.
         self.lattice[:, self.side_len_y-1, 6] = 1.
 
+
+    def demagEnergy(self, n):
+        demag = 0.
+        count = 0
+        for x in np.arange(0, self.side_len_x):
+            for y in np.arange(0, self.side_len_y):
+                if self.lattice[x,y,6]!=0:
+                    fieldLocal = self.Hlocal2(x,y,n)
+                    demag += -1*4e-7*np.pi*self.magnetisation*self.bar_width*self.bar_thickness*self.bar_length*np.dot(self.lattice[x,y,3:6], fieldLocal)
+                    count += 1
+        return(demag/count)
 
 
     def plotVertex(self, folder, vertex, Hmax, loops, steps):

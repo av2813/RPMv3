@@ -106,7 +106,7 @@ def graphingTest():
 def testDemag():
 	lattice = rpm.ASI_RPM(20,20)
 
-	lattice.squareEdges()
+	lattice.squareEdges(Hc_mean = 0.05, Hc_std = 0.0)
 	lattice.fixEdges()
 	lattice.squareGroundState()
 
@@ -124,11 +124,26 @@ def testDemag():
 	lattice.graphCharge()
 	lattice.magneticOrdering()
 
-lattice = rpm.ASI_RPM(20,20)
-lattice.squareEdges()
-lattice.fixEdges()
-lattice.squareGroundState()
-lattice.structureFactor()
+
+
+#testDemag()
+lattice = rpm.ASI_RPM(10,10)
+lattice.square(0.1, 0.01)
+#lattice.FORC(0.11, 20, 45., n=4, folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\FORC_testing')
+lattice.FORC2(0.11, 30, 45, n=4, folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\FORC_testing2')
+#lattice.kagome()
+#lattice.fixEdges()
+#lattice.randomMag()
+#lattice.square()
+#lattice.squareGroundState()
+#lattice.squareMonopoleState()
+#lattice.squareType3State()
+#lattice.graphCharge()
+#print(lattice.demagEnergy(5))
+#lattice.squareGroundState()
+#lattice.squareGroundState()
+#lattice.magneticOrdering()
+#lattice.structureFactor(-4*np.pi, 4*np.pi, 200)
 #lattice.makeMonopole(13, 13, charge = 1, fixed = True)
 #lattice.makeMonopole(25,25, charge = -1, fixed = True)
 #lattice.graphCharge()

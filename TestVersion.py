@@ -23,7 +23,7 @@ magnetisation = 800e3		#Saturation magnetisation of material in A/m (permalloy i
 size = 25					#Define the size of the lattice
 
 
-folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\QuenchedDisorder_variation'	#The folder for the files to be saved in.
+folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\SquareMonte_HCstd2p5'	#The folder for the files to be saved in.
 
 
 
@@ -31,11 +31,26 @@ lattice = rpm.ASI_RPM(size,size,bar_length = bar_length, \
 					vertex_gap = vertex_gap, bar_thickness = bar_thickness, \
         			bar_width = bar_width, magnetisation = magnetisation)
 field_angle=45.
-std_list = np.linspace(0.0, 0.2, 11)
-for Hc_std in std_list:
-	lattice.square(Hc, Hc_std)
-	lattice.randomMag(seed = 1)	
-	lattice.appliedFieldSweep(0.090/np.cos(np.pi/4), 0.011/np.cos(np.pi/4), 11, 10, 45., n=5, loops=5, folder = folder+'\\square6\\Hc_std%(Hc_std)e' %locals())
+std_list = np.linspace(0.0, 0.2, 41)
+Hmax = 0.1/np.cos(np.pi/4)
+Hc = 0.1
+#lattice.square()
+
+lattice.square(Hc, 0.025)
+lattice.searchRPM_monte(50, Hmax, steps = 15, n = 4, loops = 20, folder = folder)
+
+#for Hc_std in std_list:
+#	lattice.square(Hc, Hc_std)
+#	lattice.randomMag()
+#	folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data'
+#	differentName = 'squarerandomstate3\\Hc_std%(Hc_std)e' %locals()
+#	folderloc = os.path.join(folder, differentName)
+#	lattice.fieldSweep(Hmax, 20, field_angle, n=4, loops=20, folder = folderloc, q1 = True)
+
+#for Hc_std in std_list:
+#	lattice.square(Hc, Hc_std)
+#	lattice.randomMag(seed = 1)	
+#	lattice.appliedFieldSweep(0.090/np.cos(np.pi/4), 0.11/np.cos(np.pi/4), 11, 10, 45., n=5, loops=5, folder = folder+'\\square7\\Hc_std%(Hc_std)e' %locals())
 
 
 	#lattice.kagome(Hc, Hc_std)
