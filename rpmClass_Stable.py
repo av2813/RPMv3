@@ -11,7 +11,7 @@ import os
 from scipy.stats import norm
 import matplotlib.animation as pla
 import matplotlib.mlab as mlab
-import numdifftools as nd
+
 
 
 
@@ -440,13 +440,14 @@ class ASI_RPM():
         Hc = grid[:,:,6].flatten()
         C = grid[:,:,7].flatten()
         Charge = grid[:,:,8].flatten()
+        Hc[np.where(Hc == 0)] = np.nan
         fig, ax =plt.subplots(ncols = 2,sharex=True, sharey=True)
         plt.set_cmap(cm.plasma)
-        graph = ax[0].quiver(X, Y, Mx, My, Hc, angles='xy', scale_units='xy',  pivot = 'mid')
+        graph = ax[0].quiver(X, Y, Mx, My, Hc, angles='uv', scale_units='xy',  pivot = 'mid')     #
         ax[0].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax[0].set_ylim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax[0].set_title('Coercive Field')
-        cb1 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[0], format='%.2e',boundaries = np.linspace(np.min(Hc[np.nonzero(Hc)]), max(Hc),1000))
+        cb1 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[0], format='%.2e')
         cb1.locator = MaxNLocator(nbins = 7)
         cb1.update_ticks()
         graph = ax[1].quiver(X, Y, Mx, My, C, angles='xy', scale_units='xy',  pivot = 'mid')
@@ -578,14 +579,17 @@ class ASI_RPM():
         C = self.lattice[:,:,7].flatten()
         charge = self.lattice[:,:,8].flatten()
         Type = Vertex[:,:,4].flatten()
+        #print(Type)
         fig = plt.figure(figsize=(6,6))
         ax = fig.add_subplot(111)
         ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax.set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
-        graph = ax.scatter(X,Y,c = Vertex[:,:,4], marker = 'o', cmap = cm.plasma, zorder=2)
-        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax)
-        cb2.locator = MaxNLocator(nbins = 5)
-        cb2.update_ticks()
+        graph = ax.scatter(X,Y,c = Type, marker = 'o', cmap = cm.plasma, zorder=2)
+        #ax.scatter([-1, -1], [-1, -1], c = [1, 4])
+        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax, boundaries=np.linspace(0.5,4.5,5), ticks = [1, 2,3,4])
+        #cb2.locator = MaxNLocator(nbins = 5)
+        cb2.set_clim(0.5,4.5)
+        #cb2.update_ticks()
         ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
         plt.show()
 
@@ -645,15 +649,20 @@ class ASI_RPM():
         for root, dirs, files in os.walk(folder):
             for file in files:
                 if name in file:
-                    print(file)
+                    #print(file)
                     self.clearLattice()
                     self.load(os.path.join(root, file))
                     im = self.animateGraph()
-                    print((file[15:17].replace('_', '')))
-                    counter.append((file[15:17].replace('_', '')))
+                    #print((file[15:17].replace('_', '')))
+                    #counter.append((file[15:17].replace('_', '')))
+                    #print(file[file.find('counter')+7:file.find(r'_Loop')])
+                    counter.append(int(file[file.find('counter')+7:file.find(r'_Loop')]))
+                    plt.title(file[file.find('counter')+7:file.find(r'_Loop')])
+                    #print(file.find('counter'),file.find(r'_Loop'))
+                    #print(counter)
                     ims.append([im])
-        #sorted_ims = [x for _,x in sorted(zip(counter,ims))]
-        anim = pla.ArtistAnimation(fig_anim, ims, interval = 1000, blit = True, repeat_delay = 1000)
+        sorted_ims = [x for _,x in sorted(zip(counter,ims))]
+        anim = pla.ArtistAnimation(fig_anim, sorted_ims, interval = 100, blit = True, repeat_delay = 1000)
         plt.show()
 
     def resetCount(self):
@@ -817,6 +826,10 @@ class ASI_RPM():
         Hmax = Hmax/angleFactor
         x = np.linspace(0, 1, steps)
         y = 2*Hmax*(-x+1)-Hmax
+        H_array = np.zeros((steps, steps, 2))
+        Hr_list = np.linspace(-Hs, 0, 100)
+        #for Hr in Hr_list:
+            
         plt.plot(x, y)
         plt.show()
         Happ_list = np.array([])
@@ -829,7 +842,7 @@ class ASI_RPM():
         energy = []
         fieldloops = []
         counter = 0
-        test = np.zeros((steps, steps))
+        test = np.zeros((steps, steps, 2))
         
         for Happ in Happ_list:
             print(Happ)
@@ -1614,6 +1627,7 @@ class ASI_RPM():
         Only works for square
         Classifies the vertices into Type 1,2,3,4
         '''
+        #print(str(self.type))
         grid = copy.deepcopy(self.lattice)
         Vertex = np.zeros((self.side_len_x, self.side_len_y, 5))
         Type1 = np.array([-1,1,1,-1])
@@ -1624,7 +1638,9 @@ class ASI_RPM():
         Type3 = np.array([-1,1,1,1])
         Type3 = np.array([1,1,-1,1])
         Type4 = np.array([1,-1,1,-1])
-        if self.type =='square':
+
+        if str(self.type) =='square':
+            #print('test')
             for x in np.arange(0, self.side_len_x):
                 for y in np.arange(0, self.side_len_y):
                     Corr_local = []
@@ -1659,31 +1675,6 @@ class ASI_RPM():
             Vertex = np.zeros((self.side_len_x, self.side_len_y, 5))
         return(Vertex)
 
-    def vertexTypeMap(self):
-        '''
-        Only works with square
-        '''
-        Vertex = self.vertexType()
-        X = self.lattice[:,:,0].flatten()
-        Y = self.lattice[:,:,1].flatten()
-        z = self.lattice[:,:,2].flatten()
-        Mx = self.lattice[:,:,3].flatten()
-        My = self.lattice[:,:,4].flatten()
-        Mz = self.lattice[:,:,5].flatten()
-        Hc = self.lattice[:,:,6].flatten()
-        C = self.lattice[:,:,7].flatten()
-        charge = self.lattice[:,:,8].flatten()
-        Type = Vertex[:,:,4].flatten()
-        fig = plt.figure(figsize=(6,6))
-        ax = fig.add_subplot(111)
-        ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
-        ax.set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
-        graph = ax.scatter(X,Y,c = Vertex[:,:,4], marker = 'o', cmap = cm.plasma, zorder=2)
-        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax)
-        cb2.locator = MaxNLocator(nbins = 5)
-        cb2.update_ticks()
-        ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
-        plt.show()
 
     def vertexTypePercentage(self):
         '''
@@ -2052,10 +2043,10 @@ class ASI_RPM():
                     self.flipSpin(x,y)
 
     def fixEdges(self):
-        self.lattice[0, :, 6] = 1.
-        self.lattice[self.side_len_x-1, :, 6] = 1.
-        self.lattice[:, 0, 6] = 1.
-        self.lattice[:, self.side_len_y-1, 6] = 1.
+        self.lattice[0:3, :, 6] = 1.
+        self.lattice[(self.side_len_x-3):(self.side_len_x), :, 6] = 1.
+        self.lattice[:, 0:3, 6] = 1.
+        self.lattice[:, (self.side_len_y-3):(self.side_len_y), 6] = 1.
 
 
     def demagEnergy(self, n):
@@ -2167,7 +2158,10 @@ class ASI_thermal(ASI_RPM):
         print(deltaE, thermal_energy, self.rate0*prob, prob)
         return(self.rate0*prob, demagE)
 
-    def thermalMC(self):
+    #def thermalMC(self):
+
+
+    def kineticMC(self):
         positions = []
         rates_lattice = np.zeros((self.side_len_x, self.side_len_y, 2))
         for x in np.arange(0, self.side_len_x):

@@ -1,8 +1,10 @@
 import rpmClass_Stable as rpm
 import numpy as np
 import math
+import os
 import matplotlib.pyplot as plt
 import seaborn as sns
+import re
 from importlib import *			#Package to update the version of rpmClass_Stable
 
 reload(rpm)
@@ -104,33 +106,69 @@ def graphingTest():
 	lattice.magneticOrdering()
 
 def testDemag():
-	lattice = rpm.ASI_RPM(20,20)
+	lattice = rpm.ASI_RPM(21,21)
 
 	lattice.squareEdges(Hc_mean = 0.05, Hc_std = 0.0)
 	lattice.fixEdges()
 	lattice.squareGroundState()
-
-	lattice.changeHc(11, 12, 1.)
+	#lattice.fieldPlot()
+	#lattice.vertexTypeMap()
+	#lattice.graph()
+	#lattice.changeHc(11, 12, 1.)
 	lattice.flipSpin(11, 12)
-	lattice.changeHc(23, 26, 1.)
-	lattice.flipSpin(23, 26)
-	lattice.changeHc(19, 34, 1.)
-	lattice.flipSpin(19, 34)
-	lattice.changeHc(25, 9, 1.)
-	lattice.flipSpin(25, 9)
-	lattice.demagnetisationProtocol()
+	lattice.changeHc(11, 12, 1.)
+	lattice.flipSpin(33, 34)
+	lattice.changeHc(33, 34, 1.)
+	lattice.flipSpin(15, 16)
+	lattice.changeHc(15, 16, 1.)
+	lattice.flipSpin(27, 34)
+	lattice.changeHc(27, 34, 1.)
+	#lattice.flipSpin(19, 34)
+	#lattice.changeHc(25, 9, 1.)
+	#lattice.flipSpin(25, 9)
+	lattice.vertexTypeMap()
+	lattice.fieldSweep(0.055/np.cos(np.pi/4), 5, 45., n=5, loops = 4, folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\SquareGroundStateSolver\FieldSweep\Square20x20_HappHc_v9', q1 = True)
 	lattice.graph()
 	lattice.vertexTypeMap()
 	lattice.graphCharge()
 	lattice.magneticOrdering()
+testDemag()
 
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (See Toothy's implementation in the comments)
+    '''
+    return [ atoi(c) for c in re.split('(\d+)', text) ]
 
 
 #testDemag()
-lattice = rpm.ASI_RPM(10,10)
-lattice.square(0.1, 0.01)
+folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\SquareGroundStateSolver\FieldSweep\Square20x20_HappHc_v9'
+counter = 0
+lattice = rpm.ASI_RPM(1,1)
+
+for root, dirs, files in os.walk(folder):
+	print(files)
+	files.sort(key = natural_keys)
+	for file in files:
+		if 'Lattice_counter' in file:
+			fileloc = os.path.join(root, file)
+			lattice.load(fileloc)
+			print(file, counter)
+			#lattice.fieldPlot()
+			lattice.vertexTypeMap()
+			counter+=1
+
+#testDemag()
+#lattice = rpm.ASI_RPM(10,10)
+#lattice.square(0.1, 0.01)
 #lattice.FORC(0.11, 20, 45., n=4, folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\FORC_testing')
-lattice.FORC2(0.11, 30, 45, n=4, folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\FORC_testing2')
+#lattice.FORC2(0.11, 30, 45, n=4, folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\FORC_testing2')
 #lattice.kagome()
 #lattice.fixEdges()
 #lattice.randomMag()
