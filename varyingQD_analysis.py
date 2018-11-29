@@ -10,7 +10,7 @@ reload(rpm)
 sns.set_style("ticks")
 sns.set_palette("colorblind")
 
-folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\squarerandomstate3\VertexGap7.400000e-08\\'
+folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\squarerandomstate3\VertexGap2.000000e-08\\'
 subfolder = r'Hc_std0.000000e+00'
 statefile =  r'StateCode.npz'
 

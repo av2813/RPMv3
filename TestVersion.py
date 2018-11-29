@@ -35,17 +35,21 @@ std_list = np.linspace(0.0, 0.2, 41)
 Hmax = 0.1/np.cos(np.pi/4)
 Hc = 0.1
 #lattice.square()
-
+loadfolder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\InteractionStrengthVariation'
+filename = 'Square2p5v3'
 lattice.square(Hc, 0.025)
 lattice.randomMag()
+lattice.save(filename, folder = loadfolder)
 #lattice.searchRPM_monte(50, Hmax, steps = 15, n = 4, loops = 20, folder = folder)
-vgap_list = np.linspace(20e-9, 200e-9, 11)
+vgap_list = np.linspace(20e-9, 200e-9, 10, endpoint = True) 
+#loadfolder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\squarerandomstate3\VertexGap2.000000e-08'
+#filename = r'InitialRPMLattice_Hmax1p414214e-01_steps10_Angle7p853982e-01_neighbours4_Loops15.npz'
 for vgap in vgap_list:
 	#lattice.square(Hc, Hc_std)
-	lattice.changeVertexgap(vgap)
+	lattice.load(os.path.join(loadfolder, filename+'.npz'))
 	#lattice.randomMag()
-	folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data'
-	differentName = 'squarerandomstate3\\VertexGap%(vgap)e' %locals()
+	folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\InteractionStrengthVariation\QD2p5v3'
+	differentName = 'VertexGap%(vgap)e' %locals()
 	folderloc = os.path.join(folder, differentName)
 	lattice.fieldSweep(Hmax, 10, field_angle, n=4, loops=15, folder = folderloc, q1 = True)
 

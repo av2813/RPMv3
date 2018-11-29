@@ -426,7 +426,7 @@ class ASI_RPM():
     '''
 
 
-    def graph(self):
+    def graph(self, show = True):
         '''
         Plots the positions and directions of the bar magnetisations as a quiver graph
         '''
@@ -473,9 +473,12 @@ class ASI_RPM():
         #plt.ticklabel_format(style='sci', scilimits=(0,0))
         #plt.tight_layout()
         #return(graph)
-        plt.show()
+        if show == True:
+            plt.show()
+        else:
+            return(fig)
 
-    def graphCharge(self):
+    def graphCharge(self, show = True):
         '''
         Plots the positions and directions of the bar magnetisations as a quiver graph
         '''
@@ -506,7 +509,8 @@ class ASI_RPM():
         ax.set(adjustable='box-forced', aspect='equal')
         plt.ticklabel_format(style='sci', scilimits=(0,0))
         plt.tight_layout()
-        plt.show()
+        if show == True:
+            plt.show()
         #Y2 = grid[:,:,1].flatten()
         #Charge = grid[:,:,8].flatten()
         #Charge = np.array(Charge, dtype = np.double)
@@ -523,7 +527,7 @@ class ASI_RPM():
         #ax.set_ylim([-1*self.unit_cell_len, self.side_len_y*self.unit_cell_len])
         #ax.set_title('Vertex Charge Map')
 
-    def fieldPlot(self, n=5):
+    def fieldPlot(self, n=5, show = True):
         '''
         Plots the field direction and magnitude at each point on the graph
         '''
@@ -560,10 +564,10 @@ class ASI_RPM():
         plt.tight_layout()
         print(Hz)
         #fig.colorbar(graph, ax = ax[0],boundaries = np.linspace(np.min(Hz), max(Hz),1000))
-        plt.draw()
-        plt.show()
+        if show == True:
+            plt.show()
 
-    def vertexTypeMap(self):
+    def vertexTypeMap(self, show = True):
         '''
         Plots a quiver graph of the state of the lattice with the type of vertice for a square lattice
         Only works with square
@@ -591,9 +595,10 @@ class ASI_RPM():
         cb2.set_clim(0.5,4.5)
         #cb2.update_ticks()
         ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
-        plt.show()
+        if show == True:
+            plt.show()
 
-    def localPlot(self,x,y,n):
+    def localPlot(self,x,y,n, show = True):
         '''
         Will plot the lattice with bars with n radius of position x,y 
         plotted in bold. Useful for seeing where the n nearest bars are
@@ -618,7 +623,8 @@ class ASI_RPM():
         #plt.scatter(grid[:,:,0].flatten(), grid[:,:,1].flatten(), c = grid[:,:,8].flatten())
         plt.plot(grid[x,y,0],grid[x,y,1], 'o')
         plt.quiver(local[:,:,0].flatten(), local[:,:,1].flatten(),local[:,:,3].flatten(),local[:,:,4].flatten(), angles='xy', scale_units='xy',  pivot = 'mid', color = 'b')
-        plt.show()
+        if show == True:
+            plt.show()
 
 
     def animateGraph(self):
@@ -1692,7 +1698,7 @@ class ASI_RPM():
         #print(vertices)
         return(vertices)
 
-    def localCorrelation(self):
+    def localCorrelation(self, show = True):
         '''
         Looks at all the vertices adjacent to each vertex and asigns a correlation factor
         based on how similar they are
@@ -1755,8 +1761,9 @@ class ASI_RPM():
         cb2.locator = MaxNLocator(nbins = 5)
         cb2.update_ticks()
         ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
-        plt.show()
-        return(Correlation)
+        if show == True:
+            plt.show()
+        #return(Correlation)
 
    
     def flipSpin(self, x,y):
