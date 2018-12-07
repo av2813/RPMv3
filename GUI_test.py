@@ -19,7 +19,7 @@ class Calculator:
 
 	def __init__(self, master):
 		self.master = master
-		master.title("Calculator")
+		master.title("ASI")
 		self.lattice = rpm.ASI_RPM(1,1)
 
 		self.total = 0
@@ -31,66 +31,83 @@ class Calculator:
 		#mainframe.pack(pady = 100, padx = 100)
 		#self.folder_label_test = tk.StrVar()
 		#self.
-		self.box = tk.Entry(master)
-		self.box.pack()
-		self.folder_entry = tk.Entry(master)
-		self.folder_label = tk.Label(master, text = 'Folder loc:')
-		self.folder_entry.pack()
-		self.folder_label.pack()
+		#self.box = tk.Entry(self.master)
+		#self.box.pack()
+		#self.folder_entry = tk.Entry(self.master)
+		#self.folder_label = tk.Label(self.master, text = 'Folder loc:')
+		#self.folder_entry.pack()
+		#self.folder_label.pack()
 
-		self.file_entry = tk.Entry(master)
-		self.file_label = tk.Label(master, text = 'File loc:')
-		self.file_entry.pack()
-		self.file_label.pack()
+		#self.file_entry = tk.Entry(self.master)
+		#self.file_label = tk.Label(self.master, text = 'File loc:')
+		#self.file_entry.pack()
+		#self.file_label.pack()
 		#test = askopenfilename()
 		#print(test)
-		self.load_button = tk.Button(master, text="Load", command=self.load)
+		self.load_button = tk.Button(self.master, text="Load", command=self.load)
 		self.load_button.pack()
 
 		self.total_label_text = tk.IntVar()
 		self.total_label_text.set(self.total)
-		self.total_label = tk.Label(master, textvariable=self.total_label_text)
+		self.total_label = tk.Label(self.master, textvariable=self.total_label_text)
 
-		self.label = tk.Label(master, text="Total:")
+		self.label = tk.Label(self.master, text="Total:")
 
-		vcmd = master.register(self.validate) # we have to wrap the command
-		self.entry = tk.Entry(master)
-
-		self.add_button = tk.Button(master, text="+", command=lambda: self.update("add"))
-		self.subtract_button = tk.Button(master, text="-", command=lambda: self.update("subtract"))
-		self.reset_button = tk.Button(master, text="Reset", command=lambda: self.update("reset"))
+		vcmd = self.master.register(self.validate) # we have to wrap the command
+		#self.entry = tk.Entry(self.master)
 
 		# LAYOUT
 
 
-		self.graphoptions = tk.StringVar(master)
+		self.graphoptions = tk.StringVar(self.master)
 		self.graphchoices = {'Count', 'Magnetic charge', 'Local correlation', 'Magnetic field', 'Vertex type'}
 		self.graphoptions.set('Count')
-		self.popmenu = tk.OptionMenu(mainframe, self.graphoptions, *self.graphchoices)
-		self.popmenu_label = tk.Label(mainframe, text="Lattice graph type:")
+		self.popmenu = tk.OptionMenu(self.master, self.graphoptions, *self.graphchoices)
+		self.popmenu_label = tk.Label(self.master, text="Lattice graph type:")
 		self.popmenu_label.pack()
 		self.popmenu.pack()
+		
+		#self.graphoptions.pack()
 
 		self.graph_button = tk.Button(master, text="Graph", command=self.graph)
 		self.graph_button.pack()
+		self.fig = plt.figure('test')
+		self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
+		self.canvas.get_tk_widget().pack(side='top', fill='both', expand=1)
+		self.canvas.get_tk_widget().delete("all")
+
+		#self.canvas = None
+
+
+		#self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
+		#self.canvas.get_tk_widget().pack(side='top', fill='both', expand=1)
+		#self.canvas.get_tk_widget().pack()
+		#self.canvas.show()
+
 
 
 	def graph(self):
-
+		#canvas = None		
 		print(self.graphoptions.get())
 		if self.graphoptions.get() == 'Count':
-			fig = self.lattice.graph(show =False)
+			plt.clf()
+			self.fig = self.lattice.graph(show =False)
 		if self.graphoptions.get() == 'Magnetic charge':
-			self.lattice.graphCharge(show =False)
+			plt.clf()
+			self.fig = self.lattice.graphCharge(show =False)
 		if self.graphoptions == 'Local correlation':
-			self.lattice.localCorrelation(show =False)
+			plt.clf()
+			self.fig = self.lattice.localCorrelation(show =False)
 		if self.graphoptions.get() == 'Magnetic field':
-			self.lattice.fieldPlot(show =False)
+			plt.clf()
+			self.fig = self.lattice.fieldPlot(show =False)
 		if self.graphoptions.get() == 'Vertex type':
-			self.lattice.vertexTypeMap(show =False)
-		canvas = FigureCanvasTkAgg(fig, master=self.master)
-		canvas.get_tk_widget().pack()
-		canvas.draw()
+			plt.clf()
+			self.fig = self.lattice.vertexTypeMap(show =False)
+		
+		print(self.fig)
+		self.canvas.draw()
+		#plt.show()
 
 
 

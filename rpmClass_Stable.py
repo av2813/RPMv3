@@ -60,6 +60,9 @@ class ASI_RPM():
         load in existing arrays
         '''
         npzfile = np.load(file)
+        print(npzfile)
+        print(npzfile.files)
+        print(npzfile.f.arr_1)
         parameters = npzfile['arr_1']
         #print(len(parameters))
         self.unit_cells_x = np.int(parameters[0])
@@ -72,10 +75,13 @@ class ASI_RPM():
         self.side_len_x = np.int(parameters[7])
         self.side_len_y = np.int(parameters[8])
         self.type = parameters[9]
+        print(self.type)
         if len(parameters) > 10:
             self.Hc = parameters[10]
             self.Hc_std = parameters[11]
         self.lattice = npzfile['arr_0']
+
+
 
     def loadSpinWrite(self, file):
         """
@@ -441,7 +447,7 @@ class ASI_RPM():
         C = grid[:,:,7].flatten()
         Charge = grid[:,:,8].flatten()
         Hc[np.where(Hc == 0)] = np.nan
-        fig, ax =plt.subplots(ncols = 2,sharex=True, sharey=True)
+        fig, ax = plt.subplots(ncols = 2,sharex=True, sharey=True, num = 'test')
         plt.set_cmap(cm.plasma)
         graph = ax[0].quiver(X, Y, Mx, My, Hc, angles='uv', scale_units='xy',  pivot = 'mid')     #
         ax[0].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
@@ -494,7 +500,7 @@ class ASI_RPM():
         C = grid[:,:,7].flatten()
         MagCharge = grid[:,:,8].flatten()
         
-        fig = plt.figure(figsize=(6,6))
+        fig = plt.figure(figsize=(6,6), num = 'test')
         ax = fig.add_subplot(111)
         ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax.set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
@@ -511,6 +517,8 @@ class ASI_RPM():
         plt.tight_layout()
         if show == True:
             plt.show()
+        else:
+            return(fig)
         #Y2 = grid[:,:,1].flatten()
         #Charge = grid[:,:,8].flatten()
         #Charge = np.array(Charge, dtype = np.double)
@@ -542,7 +550,7 @@ class ASI_RPM():
         Hy = field[:,:, 1].flatten()
         Hz = field[:,:, 2].flatten()
         fieldMag = (Hx**2+Hy**2+Hz**2)**0.5
-        fig, ax =plt.subplots(ncols = 2,sharex=True, sharey=True)
+        fig, ax =plt.subplots(ncols = 2,sharex=True, sharey=True, num = 'test')
         plt.set_cmap(cm.plasma)
         graph = ax[0].quiver(X, Y, Hx, Hy,fieldMag, angles='xy', scale_units='xy',  pivot = 'mid')
         cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[1])
@@ -566,6 +574,8 @@ class ASI_RPM():
         #fig.colorbar(graph, ax = ax[0],boundaries = np.linspace(np.min(Hz), max(Hz),1000))
         if show == True:
             plt.show()
+        else:
+            return(fig)
 
     def vertexTypeMap(self, show = True):
         '''
@@ -584,7 +594,7 @@ class ASI_RPM():
         charge = self.lattice[:,:,8].flatten()
         Type = Vertex[:,:,4].flatten()
         #print(Type)
-        fig = plt.figure(figsize=(6,6))
+        fig = plt.figure(num = 'test')
         ax = fig.add_subplot(111)
         ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax.set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
@@ -597,6 +607,9 @@ class ASI_RPM():
         ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
         if show == True:
             plt.show()
+        else:
+            return(fig)
+
 
     def localPlot(self,x,y,n, show = True):
         '''
@@ -1645,7 +1658,7 @@ class ASI_RPM():
         Type3 = np.array([1,1,-1,1])
         Type4 = np.array([1,-1,1,-1])
 
-        if str(self.type) =='square':
+        if str(self.type) == 'square':
             #print('test')
             for x in np.arange(0, self.side_len_x):
                 for y in np.arange(0, self.side_len_y):
@@ -1752,7 +1765,7 @@ class ASI_RPM():
         Hc = grid[:,:,6].flatten()
         C = grid[:,:,7].flatten()
         charge = grid[:,:,8].flatten()
-        fig = plt.figure(figsize=(6,6))
+        fig = plt.figure(figsize=(6,6), num = 'test')
         ax = fig.add_subplot(111)
         ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax.set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
@@ -1763,7 +1776,9 @@ class ASI_RPM():
         ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
         if show == True:
             plt.show()
-        #return(Correlation)
+            return(Correlation)
+        else:
+            return(fig)
 
    
     def flipSpin(self, x,y):

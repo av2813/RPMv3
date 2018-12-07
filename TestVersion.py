@@ -20,7 +20,7 @@ magnetisation = 800e3		#Saturation magnetisation of material in A/m (permalloy i
 
 
 #Lattice Parameters
-size = 50					#Define the size of the lattice
+size = 20					#Define the size of the lattice
 
 
 folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\varyGap'	#The folder for the files to be saved in.
@@ -35,23 +35,31 @@ std_list = np.linspace(0.0, 0.2, 41)
 Hmax = 0.1/np.cos(np.pi/4)
 Hc = 0.1
 #lattice.square()
-loadfolder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\InteractionStrengthVariation'
-filename = 'Square2p5v3'
-lattice.square(Hc, 0.025)
-lattice.randomMag()
-lattice.save(filename, folder = loadfolder)
+loadfolder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\JackLattices\PeriodDoubling\VertexGap4.000000e-08'
+filename = 'InitialRPMLattice_Hmax1p414214e-01_steps10_Angle7p853982e-01_neighbours4_Loops15.npz'
+#lattice.shortShakti(Hc, 0.025)
+#lattice.randomMag()
+#lattice.save(filename, folder = loadfolder)
 #lattice.searchRPM_monte(50, Hmax, steps = 15, n = 4, loops = 20, folder = folder)
-vgap_list = np.linspace(20e-9, 200e-9, 10, endpoint = True) 
+#vgap_list = np.linspace(20e-9, 200e-9, 10, endpoint = True) 
+#mag_list = np.geomspace(800e3, 800e6, 10, endpoint = True)
 #loadfolder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\squarerandomstate3\VertexGap2.000000e-08'
 #filename = r'InitialRPMLattice_Hmax1p414214e-01_steps10_Angle7p853982e-01_neighbours4_Loops15.npz'
-for vgap in vgap_list:
+lattice.load(os.path.join(loadfolder, filename))
+folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\MagStrengthVariation\ShaktiQD2p5'
+differentName = 'SatMag%(mag)e' %locals()
+folderloc = os.path.join(folder, differentName)
+lattice.fieldSweep(Hmax, 10, field_angle, n=4, loops=15, folder = folderloc, q1 = True)
+
+
+#for mag in mag_list:
 	#lattice.square(Hc, Hc_std)
-	lattice.load(os.path.join(loadfolder, filename+'.npz'))
-	#lattice.randomMag()
-	folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\InteractionStrengthVariation\QD2p5v3'
-	differentName = 'VertexGap%(vgap)e' %locals()
-	folderloc = os.path.join(folder, differentName)
-	lattice.fieldSweep(Hmax, 10, field_angle, n=4, loops=15, folder = folderloc, q1 = True)
+#	lattice.load(os.path.join(loadfolder, filename+'.npz'))
+	#lattice.changeMagnetisation(mag)
+	#folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\MagStrengthVariation\ShaktiQD2p5'
+	#differentName = 'SatMag%(mag)e' %locals()
+	#folderloc = os.path.join(folder, differentName)
+	#lattice.fieldSweep(Hmax, 10, field_angle, n=4, loops=15, folder = folderloc, q1 = True)
 
 #for Hc_std in std_list:
 #	lattice.square(Hc, Hc_std)

@@ -10,7 +10,7 @@ reload(rpm)
 sns.set_style("ticks")
 sns.set_palette("colorblind")
 
-folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\squarerandomstate3\VertexGap2.000000e-08\\'
+folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\MagStrengthVariation\ShaktiQD2p5\SatMag8.000000e+05'
 subfolder = r'Hc_std0.000000e+00'
 statefile =  r'StateCode.npz'
 
@@ -65,7 +65,7 @@ for root, dirs, files in os.walk(folder):
                   print('loops', test['arr_0'][4])
                   print('Hc', test['arr_0'][5])
                   print('Hc_std', test['arr_0'][6])
-                  print('Happlied', test['arr_0'][0]*np.sin(np.pi/4.))
+                  #print('Happlied', test['arr_0'][0]*np.sin(np.pi/4.))
                   array_size = np.size(test['arr_2'])
                   #plt.figure()
                   #ax1 = plt.subplot(1,1,1)
