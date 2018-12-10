@@ -77,14 +77,22 @@ class Calculator:
 		self.canvas.get_tk_widget().delete("all")
 
 		#self.canvas = None
-
+		self.total_label_text = tk.IntVar()
+		self.total_label_text.set(self.total)
+		self.total_label = tk.Label(self.master, textvariable=self.total_label_text)
+		self.energy_button = tk.Button(self.master, text="Energy", command=self.energy_calc)
+		self.energy_button.pack()
+		self.energy_entry = tk.Entry(master)
+		self.energy_entry.pack()
 
 		#self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
 		#self.canvas.get_tk_widget().pack(side='top', fill='both', expand=1)
 		#self.canvas.get_tk_widget().pack()
 		#self.canvas.show()
 
-
+	def energy_calc(self):
+		eng = self.lattice.demagEnergy(4)
+		self.total_label_text.set(self.total)
 
 	def graph(self):
 		#canvas = None		

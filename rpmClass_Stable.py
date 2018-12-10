@@ -1658,7 +1658,7 @@ class ASI_RPM():
         Type3 = np.array([1,1,-1,1])
         Type4 = np.array([1,-1,1,-1])
 
-        if str(self.type) == 'square':
+        if str(self.type) == 'square' or self.type == b'square':
             #print('test')
             for x in np.arange(0, self.side_len_x):
                 for y in np.arange(0, self.side_len_y):
