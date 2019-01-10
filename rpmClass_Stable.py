@@ -2101,6 +2101,9 @@ class ASI_RPM():
         plt.legend()
         plt.savefig(os.path.join(folder, 'VertexFieldsteps'))
 
+    def changeQuenchedDisorder(self, QD = 0.01):
+        self.lattice = ((self.lattice[:,:,6] - self.Hc)*(QD/self.Hc_std)) + self.Hc
+
 
 class ASI_thermal(ASI_RPM):
     '''

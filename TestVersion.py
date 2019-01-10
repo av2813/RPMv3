@@ -24,7 +24,7 @@ size = 20					#Define the size of the lattice
 
 
 folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\varyGap'	#The folder for the files to be saved in.
-
+folder = os.cwd()
 
 
 lattice = rpm.ASI_RPM(size,size,bar_length = bar_length, \
@@ -34,9 +34,28 @@ field_angle=45.
 std_list = np.linspace(0.0, 0.2, 41)
 Hmax = 0.1/np.cos(np.pi/4)
 Hc = 0.1
+Hc_std = 0.
+i = 0
+lattice.square(Hc, Hc_std)
+
+for QD in Qd_list:
+	if i == 1:
+		lattice.square(Hc, Hc_std)
+	for width in width_list:
+		lattice.changeWidth(width)
+		differentName = 'SatMag%(mag)e' %locals()
+		folderloc = os.path.join(folder, differentName)
+		lattice.fieldSweep(Hmax, 10, field_angle, n=5, loops=10, folder = folderloc, q1 = True)
+
+
+	i+=1
+
+
+
+
 #lattice.square()
-loadfolder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\JackLattices\PeriodDoubling\VertexGap4.000000e-08'
-filename = 'InitialRPMLattice_Hmax1p414214e-01_steps10_Angle7p853982e-01_neighbours4_Loops15.npz'
+#loadfolder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\JackLattices\PeriodDoubling\VertexGap4.000000e-08'
+#filename = 'InitialRPMLattice_Hmax1p414214e-01_steps10_Angle7p853982e-01_neighbours4_Loops15.npz'
 #lattice.shortShakti(Hc, 0.025)
 #lattice.randomMag()
 #lattice.save(filename, folder = loadfolder)
