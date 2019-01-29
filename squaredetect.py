@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 import cv2
 import math
-from shapely import geometry
+
 from matplotlib import pyplot as plt
 from scipy import spatial
 import itertools

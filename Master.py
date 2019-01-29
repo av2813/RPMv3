@@ -13,22 +13,22 @@ import numpy as np
 import argparse
 import cv2
 import math
-from shapely import geometry
+
 from matplotlib import pyplot as plt
 from scipy import spatial
 import itertools
 import matplotlib.cm as cm
 import matplotlib.colors as cl
 reload(rpm)
-
+reload(squaredetect)
 
 Mx=[]
 My=[]
 
 #Path to MFM image and lattice image
-imageim = r'/Users/kilianstenning/Documents/PhD/Spot Detection/mfmkagome.PNG' #Path to MFM image
-latticeim = r'/Users/kilianstenning/Documents/PhD/Spot Detection/KagomeLattice.PNG' #Path to lattice image
-folder = r'/Users/kilianstenning/Documents/PhD/RPM Code\Hmax-1.7075102839838896'	#The folder for the files to be saved in.
+imageim = r'C:\Users\kjs18\Documents\Python Image Recognition\mfmkagome.PNG' #Path to MFM image
+latticeim = r'C:\Users\kjs18\Documents\Python Image Recognition\KagomeLattice.PNG' #Path to lattice image
+folder = r'C:\Users\kjs18\Documents\RPM Code\Data\Square\MFMimage\Kagome'	#The folder for the files to be saved in.
 
 #initiate image recognition files
 kagomedetect.kagome(latticeim, imageim)
