@@ -53,7 +53,8 @@ class ASI_RPM():
             self.bar_length,self.vertex_gap,self.bar_width,\
             self.bar_thickness,self.magnetisation, self.side_len_x, self.side_len_y, self.type,\
             self.Hc, self.Hc_std])
-        np.savez(os.path.join(folder,file), self.lattice, parameters)
+        np.savez_compressed(os.path.join(folder,file), self.lattice, parameters)
+
 
     def load(self, file):
         '''
@@ -77,8 +78,8 @@ class ASI_RPM():
         self.type = parameters[9]
         print(self.type)
         if len(parameters) > 10:
-            self.Hc = parameters[10]
-            self.Hc_std = parameters[11]
+            self.Hc = np.float(parameters[10])
+            self.Hc_std = np.float(parameters[11])
         self.lattice = npzfile['arr_0']
 
 
@@ -142,6 +143,38 @@ class ASI_RPM():
                         ypos = y*(self.bar_length+self.vertex_gap)/2
                         grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,1.,0.,0., np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                     else:
+                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,1.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
+                else:
+                    if x%2 ==0 and x!=0 and y!=0 and x!=self.side_len_x-1 and y!=self.side_len_x-1:
+                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,0.,0.,0,0,0])
+                    else:
+                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,0.,0.,0,0,None])
+        self.lattice = grid
+
+    def brickwork(self, Hc_mean = 0.03, Hc_std = 0.05):
+        '''
+        Defines the lattice positions, magnetisation directions and coercive fields of an array of 
+        square ASI
+        Takes the unit cell from the initial defined parameters
+        Generates a normally distributed range of coercive fields of the bars using Hc_mean and Hc_std as a percentage
+        One thing to potentially change is to have the positions in nanometers
+        '''
+        self.type = 'brickwork'
+        self.Hc = Hc_mean                #Unit cell direction in x andy y
+        self.Hc_std = Hc_std
+        self.side_len_x = 2*self.unit_cells_x+1
+        self.side_len_y = 2*self.unit_cells_y+1
+        grid = np.zeros((2*self.unit_cells_x+1, 2*self.unit_cells_y+1, 9))        
+        for x in range(0, 2*self.unit_cells_x+1):
+            for y in range(0, 2*self.unit_cells_y+1):
+                if (x+y)%2 != 0:
+                    if y%2 == 0:
+                        xpos = x*(self.bar_length+self.vertex_gap)/2
+                        ypos = y*(self.bar_length+self.vertex_gap)/2
+                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,1.,0.,0., np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
+                    if (y-1)%4==0 and x%4==0:
+                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,1.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
+                    if (y-3)%4==0 and (x-2)%4==0:
                         grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,1.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                 else:
                     if x%2 ==0 and x!=0 and y!=0 and x!=self.side_len_x-1 and y!=self.side_len_x-1:
@@ -262,6 +295,8 @@ class ASI_RPM():
         Uses a normal distribution for the coercive field of each bar
         '''
         self.type = 'short_shakti'
+        self.Hc = Hc_mean
+        self.Hc_std = Hc_std
         self.side_len_x = 4*self.unit_cells_x+1            #Unit cell direction in x andy y
         self.side_len_y = 4*self.unit_cells_y+1
         grid = np.zeros((self.side_len_x, self.side_len_y, 9))        
@@ -632,10 +667,10 @@ class ASI_RPM():
 
         local = self.lattice[x1:x2,y1:y2,:]
         grid = self.lattice
-        plt.quiver(grid[:,:,0].flatten(), grid[:,:,1].flatten(),grid[:,:,3].flatten(),grid[:,:,4].flatten(), angles='xy', scale_units='xy',  pivot = 'mid')
+        #plt.quiver(grid[:,:,0].flatten(), grid[:,:,1].flatten(),grid[:,:,3].flatten(),grid[:,:,4].flatten(), angles='xy', scale_units='xy',  pivot = 'mid')
         #plt.scatter(grid[:,:,0].flatten(), grid[:,:,1].flatten(), c = grid[:,:,8].flatten())
         plt.plot(grid[x,y,0],grid[x,y,1], 'o')
-        plt.quiver(local[:,:,0].flatten(), local[:,:,1].flatten(),local[:,:,3].flatten(),local[:,:,4].flatten(), angles='xy', scale_units='xy',  pivot = 'mid', color = 'b')
+        plt.quiver(local[:,:,0].flatten(), local[:,:,1].flatten(),local[:,:,3].flatten(),local[:,:,4].flatten(),local[:,:,7].flatten(),  angles='xy', scale_units='xy',  pivot = 'mid', color = 'b')
         if show == True:
             plt.show()
 
@@ -665,23 +700,35 @@ class ASI_RPM():
         ims = []
         counter = []
         fig_anim = plt.figure('Animation')
+        def sortFunc(element):
+            #print(element)
+            begin = element.find('counter')+7
+            end = element.find('_Loop')
+            #print(element.find('counter'))
+            #print(element.find('_Loop'))
+            #print(int(element[begin:end]))
+            return(int(element[begin:end]))
         for root, dirs, files in os.walk(folder):
-            for file in files:
-                if name in file:
-                    #print(file)
-                    self.clearLattice()
-                    self.load(os.path.join(root, file))
-                    im = self.animateGraph()
-                    #print((file[15:17].replace('_', '')))
-                    #counter.append((file[15:17].replace('_', '')))
-                    #print(file[file.find('counter')+7:file.find(r'_Loop')])
-                    counter.append(int(file[file.find('counter')+7:file.find(r'_Loop')]))
-                    plt.title(file[file.find('counter')+7:file.find(r'_Loop')])
-                    #print(file.find('counter'),file.find(r'_Loop'))
-                    #print(counter)
-                    ims.append([im])
-        sorted_ims = [x for _,x in sorted(zip(counter,ims))]
-        anim = pla.ArtistAnimation(fig_anim, sorted_ims, interval = 100, blit = True, repeat_delay = 1000)
+            new_files = list(filter(lambda x: 'Lattice_counter' in x, files))
+            new_files.sort(key = sortFunc)
+            for file in new_files:
+                #print(file)
+                self.clearLattice()
+                self.load(os.path.join(root, file))
+                im = self.animateGraph()
+                #print((file[15:17].replace('_', '')))
+                #counter.append((file[15:17].replace('_', '')))
+                #print(file[file.find('counter')+7:file.find(r'_Loop')])
+                #counter.append(int(file[file.find('counter')+7:file.find(r'_Loop')]))
+                plt.title(file[file.find('counter')+7:file.find(r'_Loop')])
+                #print(file.find('counter'),file.find(r'_Loop'))
+                #print(counter)
+                ims.append([im])
+        #sorted_ims = [x for _,x in sorted(zip(counter,ims))]
+        anim = pla.ArtistAnimation(fig_anim, ims, interval = 100, blit = True, repeat_delay = 1000)
+        #Writer = pla.writers['ffmpeg']
+        writer = pla.FFMpegWriter(fps=15, metadata=dict(artist='Alex Vanstone'), bitrate=1800)
+        #anim.save(os.path.join(folder, 'Video.mp4'), writer = writer)
         plt.show()
 
     def resetCount(self):
@@ -785,10 +832,13 @@ class ASI_RPM():
         monopole = []
         fieldloops = []
         vertex = []
-        field_steps = np.linspace(Hc_min*0.9,Hmax,steps+1)
-        field_steps = np.append(field_steps, np.linspace(Hmax,Hc_min*0.9,steps+1))
+        field_steps = np.array([0.])
+        field_steps = np.append(field_steps, np.linspace(Hc_min*0.9,Hmax,steps+1))
+        field_steps = np.append(field_steps, np.array([0.9*Hc_min]))
+        #field_steps = np.append(field_steps, np.linspace(Hmax,Hc_min*0.9,steps+1))
         field_steps = np.append(field_steps, np.linspace(-(Hc_min*0.9),-Hmax,steps+1))
-        field_steps = np.append(field_steps, np.linspace(-Hmax,-(Hc_min*0.9),steps+1))
+        field_steps = np.append(field_steps, np.array([-0.9*Hc_min]))
+        #field_steps = np.append(field_steps, np.linspace(-Hmax,-(Hc_min*0.9),steps+1))
         print(field_steps)
         counter = 0
         if folder == None:
@@ -1442,7 +1492,7 @@ class ASI_RPM():
             plt.close()
         else:
             plt.show()
-        return(field)
+        return(np.mean(field), np.std(field), field)
 
 
     def effectiveCoercive(self, x, y, n):
@@ -1519,7 +1569,7 @@ class ASI_RPM():
         else:
             plt.show()
 
-    def latticeFieldHistogram(self, n, save = False):
+    def latticeFieldHistogram(self, n, save = False, folder =None):
         '''
         Plots a histogram for the field on the lattice.
         Can be set to automatically save
@@ -1542,7 +1592,11 @@ class ASI_RPM():
         ax1.set_xlabel('Field Strength along axis (T)')
         ax1.set_title(r'Local Field Strength Distribution - n=%.0f nearest neighbours' %(n))
         if save == True:
-            folder = os.getcwd()+r'\\'+self.type+self.interType+r'_localFieldLatticeHistogram_length%.2Ewidth%.2Evgap%.2Ethick%.2E\\' \
+            if folder == None:
+                folderloc = os.getcwd()
+            else:
+                folderloc = folder
+            folder = folderloc+r'\\'+self.type+self.interType+r'_localFieldLatticeHistogram_length%.2Ewidth%.2Evgap%.2Ethick%.2E\\' \
             %(self.bar_length, self.bar_width, self.vertex_gap, self.bar_thickness)
             if not os.path.exists(folder):
                 os.makedirs(folder)
@@ -1554,7 +1608,7 @@ class ASI_RPM():
             plt.close()
         else:
             plt.show()
-        return(field)
+        return(np.mean(field), np.std(field), field)
 
     def vertexHistogram(self):
         '''
@@ -1641,6 +1695,9 @@ class ASI_RPM():
         #magcharge = grid[:,:,8].flatten()
         return(np.nanmean(np.absolute(grid[:,:,8])))
 
+    def returnUnitCellLen(self):
+        return(float(self.unit_cell_len))
+
     def vertexType(self):
         '''
         Only works for square
@@ -1693,6 +1750,28 @@ class ASI_RPM():
         if self.type == 'kagome':
             Vertex = np.zeros((self.side_len_x, self.side_len_y, 5))
         return(Vertex)
+
+    def magMoment(self, angle):
+        totalMag = 0
+        for x in np.arange(0, self.side_len_x):
+            for y in np.arange(0, self.side_len_y):
+                if self.lattice[x,y,6] != 0:
+                    totalMag += np.dot(self.lattice[x, y, 3:5], np.array([np.cos(angle), np.sin(angle)]))*(1e3*self.magnetisation*self.bar_length*self.bar_width*self.bar_thickness)
+        print(totalMag, (self.lattice[-1, -1, 0]*self.lattice[-1, -1, 1]))
+        return(totalMag/(self.lattice[-1, -1, 0]*self.lattice[-1, -1, 1]))
+
+    def periodDoubleCounter(self, n):
+        periodDoubleSpinCount = 0
+        for x in range(0, self.side_len_x):
+            for y in range(0, self.side_len_y):
+                if self.lattice[x,y,7] in range(n-1, n+1):
+                    periodDoubleSpinCount += 1
+                    print("found period doubled spin")
+                    print("x index =",x)
+                    print("y index =",y)
+                    print("flip count =",self.lattice[x,y,7])        
+        print("no of period doubled spins", periodDoubleSpinCount)
+        return(periodDoubleSpinCount)
 
 
     def vertexTypePercentage(self):
@@ -2102,7 +2181,10 @@ class ASI_RPM():
         plt.savefig(os.path.join(folder, 'VertexFieldsteps'))
 
     def changeQuenchedDisorder(self, QD = 0.01):
-        self.lattice = ((self.lattice[:,:,6] - self.Hc)*(QD/self.Hc_std)) + self.Hc
+        for x in np.arange(0, self.side_len_x):
+            for y in np.arange(0, self.side_len_y):
+                if self.lattice[x,y,6]!=0:
+                    self.lattice[x,y,6] = ((self.lattice[x,y,6] - self.Hc)*(QD/self.Hc_std)) + self.Hc
 
 
 class ASI_thermal(ASI_RPM):

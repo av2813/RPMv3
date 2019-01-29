@@ -132,7 +132,7 @@ def testDemag():
 	lattice.vertexTypeMap()
 	lattice.graphCharge()
 	lattice.magneticOrdering()
-testDemag()
+#testDemag()
 
 def atoi(text):
     return int(text) if text.isdigit() else text
@@ -150,19 +150,26 @@ def natural_keys(text):
 #testDemag()
 folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\SquareGroundStateSolver\FieldSweep\Square20x20_HappHc_v9'
 counter = 0
-lattice = rpm.ASI_RPM(1,1)
+lattice = rpm.ASI_RPM(20,20)
 
-for root, dirs, files in os.walk(folder):
-	print(files)
-	files.sort(key = natural_keys)
-	for file in files:
-		if 'Lattice_counter' in file:
-			fileloc = os.path.join(root, file)
-			lattice.load(fileloc)
-			print(file, counter)
-			#lattice.fieldPlot()
-			lattice.vertexTypeMap()
-			counter+=1
+lattice.brickwork()
+lattice.save('test3')
+lattice.graph()
+lattice.kagome()
+lattice.load('test3.npz')
+lattice.graph()
+
+# for root, dirs, files in os.walk(folder):
+# 	print(files)
+# 	files.sort(key = natural_keys)
+# 	for file in files:
+# 		if 'Lattice_counter' in file:
+# 			fileloc = os.path.join(root, file)
+# 			lattice.load(fileloc)
+# 			print(file, counter)
+# 			#lattice.fieldPlot()
+# 			lattice.vertexTypeMap()
+# 			counter+=1
 
 #testDemag()
 #lattice = rpm.ASI_RPM(10,10)
