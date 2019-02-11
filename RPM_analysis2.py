@@ -15,25 +15,23 @@ import time
 import matplotlib.cm as cm
 import matplotlib
 from matplotlib.colors import ListedColormap
-from matplotlib.colors import LinearSegmentedColormap
 reload(rpm)     #make sure that the class is updated with any changes
 rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
 rcParams.update({'figure.autolayout': True})
 rc('text', usetex=True)
 #sns.set_context('poster')
 
-sns.set_style('ticks')
+sns.set_style('white')
 savefolder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\PeriodDoublingFigures\ZurichPoster'
 name = 'Square1p_Test'
-#
-#sns.set_palette("dark", 3)
-sns.palplot(sns.color_palette("coolwarm"))
+#sns.set_palette("coolwarm")
+#sns.palplot(sns.color_palette("coolwarm"))
 #my_cmap = ListedColormap(sns.color_palette('coolwarm').as_hex())
 
 
 
 
-folder = r'D:\RPM_Rapid\SquarePeriodDouble\PeriodDoublingData_QD1.000000e-01_Width4.200000e-07_Count3'  #Interesting Square Lattice
+#folder = r'D:\RPM_Rapid\SquarePeriodDouble\PeriodDoublingData_QD1.000000e-01_Width4.200000e-07_Count3'  #Interesting Square Lattice
 #folder = r'D:\RPM_Rapid\SquarePeriodDouble\PeriodDoublingData_QD8.000002e-02_Width2.400000e-07_Count2'  #Interesting Square Lattice
 #folder = r'D:\RPM_Rapid\ShaktiPeriodDoublingv2\PeriodDoublingData_QD2.400008e-02_Width2.000000e-07_Count1'
 #folder = r'D:\RPM_Rapid\TetrisPeriodDouble\PeriodDoublingData_QD7.200003e-02_Width2.400000e-07_Count1'
@@ -43,8 +41,8 @@ folder = r'D:\RPM_Rapid\SquarePeriodDouble\PeriodDoublingData_QD1.000000e-01_Wid
 #state_file = r'RPMStateInfo_Hmax1.414214e-01_steps10_Angle7.853982e-01_neighbours5_Loops10.npz'
 #state_data= np.load(os.path.join(folder,state_file))
 
-#folder = r'D:\RPM_Rapid\CorrelationTestFolders\Hc_std5.000000e-02'
-#folder = r'D:\RPM_Rapid\CorrelationTestFolders\Hc_std2.000000e-02'
+folder = r'D:\RPM_Rapid\CorrelationTestFolders\Hc_std5.000000e-02'
+#folder = r'D:\RPM_Rapid\CorrelationTestFolders\Hc_std1.000000e-02'
 
 # def correlationGraph(folders):
 #     data = []
@@ -86,35 +84,6 @@ def forceAspect(ax,aspect=1):
     ax.set_aspect(abs((extent[1]-extent[0])/(extent[3]-extent[2]))/aspect)
 
 
-Lattice = rpm.ASI_RPM(1,1)
-sns.set_context('poster', font_scale = 2)
-corr_list = Lattice.correlationAll(folder)
-#plt.savefig(os.path.join(savefolder, name+'Progress.svg'), transparent=True)
-#plt.savefig(os.path.join(savefolder, name+'Progress.png'), transparent=True)
-sns.set_style('ticks')
-sns.set_style({'axes.grid':True})
-fig, ax = plt.subplots(1, 1)
-plt.plot(corr_list[:125])
-plt.ylabel('Correlation')
-plt.xlabel('Minor Loop')
-xticks = np.array([11, 36, 61, 86, 111, 136])
-ax.set_xticks(xticks)
-ax.set_xticklabels([r'2', r'3', r'4', r'5', r'6'])
-#ax.set(adjustable='box-forced', aspect='equal')
-#plt.axhline(y=1., color = 'k')
-#plt.savefig(os.path.join(savefolder, name+'Corrv2.svg'), transparent=True)
-plt.savefig(os.path.join(savefolder, name+'Corrv2.png'), transparent=True)
-
-plt.show()
-Lattice.fieldSweepAnalysis(folder)
-Lattice.load(os.path.join(folder, file))
-Lattice.graph()
-Lattice.localPlot(28,40, 10)
-
-#Lattice.fieldSweepAnimation(folder)#plt.show()
-def display_cmap(cmap):
-    plt.imshow(np.linspace(0, 100, 256)[None, :],  aspect=25,    interpolation='nearest', cmap=cmap) 
-    plt.axis('off')
 cdict1 = {'red':   ((0.0, 0.0, 0.0),
                    (0.5, 0.0, 0.1),
                    (1.0, 1.0, 1.0)),
@@ -128,46 +97,44 @@ cdict1 = {'red':   ((0.0, 0.0, 0.0),
         }
 #blue_red1 = LinearSegmentedColormap('BlueRed1', cdict1)
 
-#display_cmap(blue_red1)
-#plt.show()
 
+
+
+Lattice = rpm.ASI_RPM(1,1)
+sns.set_context('poster', font_scale = 2)
+corr_list = Lattice.correlationAll(folder)
+#plt.savefig(os.path.join(savefolder, name+'Progress.svg'), transparent=True)
+#plt.savefig(os.path.join(savefolder, name+'Progress.png'), transparent=True)
+fig, ax = plt.subplots(1, 1)
+ax.plot(corr_list[:150])
+plt.ylabel('Correlation')
+plt.xlabel('Applied Field')
+xticks = np.array([11, 23, 36, 48, 61, 73, 86, 98, 111, 123, 136, 148])
+ax.set_xticks(xticks)
+ax.set_xticklabels([r'$H_{c}$', r'-$H_{c}$', r'$H_{c}$', r'-$H_{c}$', r'$H_{c}$', r'$H_{c}$', r'-$H_{c}$', r'$H_{c}$', r'-$H_{c}$', r'$H_{c}$', r'-$H_{c}$', r'$H_{c}$'])
+#plt.axhline(y=1., color = 'k')
+plt.savefig(os.path.join(savefolder, name+'Corr.svg'), transparent=True)
+plt.savefig(os.path.join(savefolder, name+'Corr.png'), transparent=True)
+plt.show()
+#Lattice.fieldSweepAnalysis(folder)
+#Lattice.load(os.path.join(folder, file))
+#Lattice.graph()
+#Lattice.localPlot(28,40, 10)
+
+#Lattice.fieldSweepAnimation(folder)#plt.show()
 test = matplotlib.markers.MarkerStyle(marker='o', fillstyle=None)
 def graph(ax, lattice, unit_cell_len=None, lattice_prev=None, name = ''):
     '''
     Plots the positions and directions of the bar magnetisations as a quiver graph
     '''
-    x = 24
-    y = 21
-    n = 11
-    x1 = x - n
-    x2 = x + n+1
-    y1 = y - n
-    y2 = y + n+1
     if lattice_prev == None:
         print('dont care')
     else:
         count_diff = lattice[:, :, 7] - lattice_prev[:,:,7]
-        #count_diff = count_diff
+        count_diff = count_diff.flatten()
         #count_diff[np.where(count_diff>1.5)] = 0
         print(count_diff)
-        #local_cd = count_diff[x1:x2,y1:y2]
-        count_diff = count_diff.flatten()
-
     grid = lattice
-
-    
-    
-    # if x1<0:
-    #     x1 = 0
-    # if x2>side_len_x:
-    #     x2 = side_len_x -1
-    # if y1<0:
-    #     y1 = 0
-    # if y2>side_len_y-1:
-    #     y2 = side_len_y-1
-
-    local = grid[x1:x2,y1:y2,:]
-    
     X = grid[:,:,0].flatten()
     Y = grid[:,:,1].flatten()
     z = grid[:,:,2].flatten()
@@ -175,49 +142,18 @@ def graph(ax, lattice, unit_cell_len=None, lattice_prev=None, name = ''):
     My = grid[:,:,4].flatten()
     Mz = grid[:,:,5].flatten()
     Hc = grid[:,:,6].flatten()
-    X[np.where(Hc==0)] = -1
-    Y[np.where(Hc==0)] = -1
     C = grid[:,:,7].flatten()
     Charge = grid[:,:,8].flatten()
     Hc[np.where(Hc == 0)] = np.nan
-
-    #sns.palplot(sns.color_palette("dark", 3))
-    #plt.show()
-    #plt.set_cmap(sns.color_palette("dark", 3))
+    plt.set_cmap(sns.color_palette("dark", 3))
     #plt.set_cmap('RdBu')
-
-    plt.tick_params(
-        axis='x',          # changes apply to the x-axis
-        which='both',      # both major and minor ticks are affected
-        bottom=False,      # ticks along the bottom edge are off
-        top=False,         # ticks along the top edge are off
-        labelbottom=False) # labels along the bottom edge are off
-
-    plt.tick_params(
-        axis='y',          # changes apply to the x-axis
-        which='both',      # both major and minor ticks are affected
-        left=False,      # ticks along the bottom edge are off
-        right=False,         # ticks along the top edge are off
-        labelleft=False) # labels along the bottom edge are off
     #fig, ax = plt.subplots(figsize = fig_size)
     #plt.set_cmap('coolwarm')
     if lattice_prev == None:
-        plt.set_cmap('coolwarm')
-        graph = ax.quiver(X, Y, Mx, My, width = 0.009,headlength =4, minshaft = 2,minlength = 3, angles='uv', scale_units='xy', pivot = 'mid')  
-        ax.set_xlim([x1 - unit_cell_len, x2+unit_cell_len])
-        ax.set_ylim([y1 - unit_cell_len, x2+unit_cell_len])
-        #ax.set_xlim([-1*unit_cell_len+np.min(X), np.max(X)+unit_cell_len])
-        #ax.set_ylim([-1*unit_cell_len+np.min(X), np.max(Y)+unit_cell_len])
+        graph = ax.quiver(X, Y, Mx, My,(Mx+My), angles='uv', scale_units='xy',  pivot = 'mid')     #
     else:
-        plt.set_cmap('viridis')
-        #cmap.set_under(color = 'k')
-        graph = ax.scatter(X, Y, s = 100., c=count_diff, marker =None, linewidth=0.1)
-        ax.set_xlim([x1 - unit_cell_len, x2+unit_cell_len])
-        ax.set_ylim([y1 - unit_cell_len, x2+unit_cell_len])
-        #ax.set_xlim([-1*unit_cell_len+np.min(X), np.max(X)+unit_cell_len])
-        #ax.set_ylim([-1*unit_cell_len+np.min(X), np.max(Y)+unit_cell_len])
-        graph = ax.quiver(X, Y, Mx, My, width = 0.009,headlength =4, minshaft = 2,minlength = 3, angles='uv', scale_units='xy',  pivot = 'mid') 
-
+        graph = ax.scatter(X, Y, s = 1.0, c=count_diff, marker ='c', linewidth=0.1)
+        #graph = ax.quiver(X, Y, Mx, My,count_diff, angles='uv', scale_units='xy',  pivot = 'mid')  
     ax.set_xlim([-1*unit_cell_len, np.max(X)+unit_cell_len])
     ax.set_ylim([-1*unit_cell_len, np.max(X)+unit_cell_len])
     ax.set(adjustable='box-forced', aspect='equal')
@@ -254,11 +190,11 @@ def sortFunc(element):
 filename.sort(key = sortFunc)
 print(filename)
 Lattice_list = []
-filename = filename[:14]
+filename = filename[:12]
 sns.set_style('white')
 fig, ax = plt.subplots(2, int(len(filename)/2))
 savetemp = r'D:\RPM_Rapid\Hysteresis\PeriodDoubleFigures'
-namePD = r'4MicroState'
+namePD = r'2MicroState'
 for file in filename:
     fig, ax = plt.subplots(1,1)
     Lattice.load(os.path.join(folder, file))
@@ -266,13 +202,12 @@ for file in filename:
     if i>=2:
         ax = graph(ax,Lattice.returnLattice(), unit_cell_len = ans, lattice_prev = Lattice_list[i-2], name=str(i))
     elif i==1:
-        ax = graph(ax,Lattice.returnLattice(), unit_cell_len = ans, name=str(i))
+        ax = graph(ax,Lattice.returnLattice(), unit_cell_len = ans, lattice_prev = Lattice_list[i], name=str(i))
     else:
-        ax = graph(ax,Lattice.returnLattice(), unit_cell_len = ans, name=str(i))
+        ax = graph(ax,Lattice.returnLattice(), unit_cell_len = ans, lattice_prev = Lattice_list[i], name=str(i))
     i+=1
     plt.savefig(os.path.join(savetemp, namePD+'%(i)d.svg' % locals()), transparent=True)
     plt.savefig(os.path.join(savetemp, namePD+'%(i)d.png' % locals()), transparent=True)
-    plt.show()
 #print(ax.flatten())
 #ax = np.transpose(ax)
 for axes in ax.flatten():
