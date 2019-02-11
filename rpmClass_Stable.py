@@ -43,6 +43,9 @@ class ASI_RPM():
         self.unit_cell_len = (bar_length+vertex_gap)/2
         self.interType = 'dumbbell'
 
+    def mfmLoad(self, Mx, My):
+        self.lattice[:,:,3] = Mx
+        self.lattice[:,:,4] = My
 
     def save(self, file, folder = os.getcwd()):
         '''
@@ -274,24 +277,24 @@ class ASI_RPM():
         for x in range(0, self.side_len_x):
             for y in range(0, self.side_len_y):
                 if x%2!=0 and y%2==0:
-                    if (x-1)%4==0 and (y-2)%4==0:
+                    if (x-1)%4==0 and (y)%4==0:
                         if y%(self.side_len_y-1)!=0:
                             grid[x+1,y] = np.array([xfactor*(x+test)*self.unit_cell_len,(y)*self.unit_cell_len,0.,0.,0.,0.,0.,0, 0])
                             grid[x-1,y] = np.array([xfactor*(x-test)*self.unit_cell_len,(y)*self.unit_cell_len,0.,0.,0.,0.,0.,0, 0])
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,(y)*self.unit_cell_len,0.,1.,0.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0, None])
-                    elif (x-3)%4==0 and (y)%4==0:
+                    elif (x-3)%4==0 and (y+2)%4==0:
                         if y%(self.side_len_y-1)!=0:
                             grid[x+1,y] = np.array([xfactor*(x+test)*self.unit_cell_len,(y)*self.unit_cell_len,0.,0.,0.,0.,0.,0, 0])
                             grid[x-1,y] = np.array([xfactor*(x-test)*self.unit_cell_len,(y)*self.unit_cell_len,0.,0.,0.,0.,0.,0, 0])
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,y*self.unit_cell_len,0.,1.,0.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                     else:
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,y*self.unit_cell_len,0.,0,0,0,0,0,None])
-                elif x%2 ==0 and (y-1)%4==0:
+                elif x%2 ==0 and (y+1)%4==0:
                     if x%4==0:
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,yfactor*y*self.unit_cell_len,0.,0.5,(3**0.5/2),0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                     else:
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,yfactor*y*self.unit_cell_len,0.,-0.5,(3**0.5/2),0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
-                elif x%2 ==0 and (y-3)%4==0:
+                elif x%2 ==0 and (y-1)%4==0:
                     if x%4==0:
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,yfactor*y*self.unit_cell_len,0.,-0.5,(3**0.5/2),0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                     else:
@@ -299,6 +302,7 @@ class ASI_RPM():
                 else:
                     if np.array_equal(grid[x,y,0:2], [0., 0.]):
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,y*self.unit_cell_len,0.,0,0,0,0,0,None])
+
         self.lattice = grid
 
 
@@ -542,7 +546,9 @@ class ASI_RPM():
         X = grid[:,:,0].flatten()
         Y = grid[:,:,1].flatten()
         z = grid[:,:,2].flatten()
+        print(grid[:,:,3])
         Mx = grid[:,:,3].flatten()
+        print(grid[:,:,4])
         My = grid[:,:,4].flatten()
         Mz = grid[:,:,5].flatten()
         Hc = grid[:,:,6].flatten()
@@ -655,6 +661,7 @@ class ASI_RPM():
         #cb2.locator = MaxNLocator(nbins = 5)
         cb2.set_clim(0.5,4.5)
         #cb2.update_ticks()
+
         ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
         if show == True:
             plt.show()
@@ -1432,6 +1439,7 @@ class ASI_RPM():
         plt.legend()
         plt.savefig(os.path.join(folder, 'CorrelationFieldsteps'))
 
+
     def plotMagnetisation(self, folder, mag, Hmax, loops, steps):
         '''
         Plots the magnetisation in both x and y through the field sweep as a function
@@ -1508,6 +1516,86 @@ class ASI_RPM():
         r1 = np.subtract(np.transpose(r), r0).T - m*self.bar_length/2
         B = 1e-7*mag_charge*(r1/np.linalg.norm(r1)**3-r2/np.linalg.norm(r2)**3)
         return(B)
+
+
+
+    def plotMagnetisation(self, folder, mag, Hmax, loops, steps):
+        '''
+        Plots the magnetisation in both x and y through the field sweep as a function
+        of number of field steps
+        '''
+        mag_plotx = plt.figure('Magnetisation')
+        ax_mx = mag_plotx.add_subplot(111)
+        ax_mx.plot(2*mag[:,0],'.', label = Hmax)
+        plt.ylabel('Magnetisation (x-dir)')
+        plt.xlabel('Number of field steps')
+        for i in np.arange(1, loops):
+            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+        plt.legend()
+        plt.savefig(os.path.join(folder, 'MagxFieldsteps'))
+        mag_ploty = plt.figure('Magnetisation')
+        ax_my = mag_ploty.add_subplot(111)
+        ax_my.plot(2*mag[:,1],'.', label = Hmax)
+        for i in np.arange(1, loops):
+            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+        plt.ylabel('Magnetisation (y-dir)')
+        plt.xlabel('Number of field steps')
+        plt.legend()
+        plt.savefig(os.path.join(folder, 'MagyFieldsteps'))
+
+    def plotMonopole(self, folder, monopole, Hmax, loops, steps):
+        '''
+        Plots the monopole density through the field sweep as a function
+        of number of field steps
+        '''
+        mono = plt.figure('Monopole')
+        ax_m = mono.add_subplot(111)
+        ax_m.plot(monopole, '.', label = Hmax)
+        plt.ylabel('Monopole density')
+        plt.xlabel('Number of field steps')
+        for i in np.arange(1, loops):
+            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+        plt.legend()
+        plt.savefig(os.path.join(folder, 'MonopoleFieldsteps'))
+
+    def plotVertex(self, folder, vertex, Hmax, loops, steps):
+        '''
+        Plots the vertex type percentage through the field sweep as a function
+        of number of field steps
+        '''
+        vert = plt.figure('Vertex')
+        ax_v = vert.add_subplot(111)
+        ax_v.plot(vertex[:,0],'.', label = 'Type 1')
+        ax_v.plot(vertex[:,1],'.', label = 'Type 2')
+        ax_v.plot(vertex[:,2],'.', label = 'Type 3')
+        ax_v.plot(vertex[:,3],'.', label = 'Type 4')
+        plt.ylabel('Vertex Percentage')
+        plt.xlabel('Number of field steps')
+        for i in np.arange(1, loops):
+            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+        plt.legend()
+        plt.savefig(os.path.join(folder, 'VertexFieldsteps'))
+ 
+
+
+    
+    
+    def dumbbell(self, m, r, r0):
+        '''
+        Uses the dumbbell model to calculate the interaction between
+        each bar
+        '''
+        m = np.array(m)
+        r = np.array(r)
+        r0 = np.array(r0)
+
+        mag_charge = self.bar_thickness*self.magnetisation*self.bar_width
+
+        r2 = np.subtract(np.transpose(r), r0).T + m*self.bar_length/2
+        r1 = np.subtract(np.transpose(r), r0).T - m*self.bar_length/2
+        B = 1e-7*mag_charge*(r1/np.linalg.norm(r1)**3-r2/np.linalg.norm(r2)**3)
+        return(B)
+
 
     def dipole(self, m, r, r0):
         '''
@@ -2087,6 +2175,7 @@ class ASI_RPM():
             Vertex = np.zeros((self.side_len_x, self.side_len_y, 5))
         return(Vertex)
 
+
     def magMoment(self, angle):
         totalMag = 0
         for x in np.arange(0, self.side_len_x):
@@ -2108,6 +2197,34 @@ class ASI_RPM():
                     print("flip count =",self.lattice[x,y,7])        
         print("no of period doubled spins", periodDoubleSpinCount)
         return(periodDoubleSpinCount)
+
+
+    def vertexTypeMap(self):
+        '''
+        Only works with square
+        '''
+        Vertex = self.vertexType()
+        X = self.lattice[:,:,0].flatten()
+        Y = self.lattice[:,:,1].flatten()
+        z = self.lattice[:,:,2].flatten()
+        Mx = self.lattice[:,:,3].flatten()
+        My = self.lattice[:,:,4].flatten()
+        Mz = self.lattice[:,:,5].flatten()
+        Hc = self.lattice[:,:,6].flatten()
+        C = self.lattice[:,:,7].flatten()
+        charge = self.lattice[:,:,8].flatten()
+        Type = Vertex[:,:,4].flatten()
+        fig = plt.figure(figsize=(6,6))
+        ax = fig.add_subplot(111)
+        ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
+        graph = ax.scatter(X,Y,c = Vertex[:,:,4], marker = 'o')
+        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax)
+        cb2.locator = MaxNLocator(nbins = 5)
+        cb2.update_ticks()
+        ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
+        plt.show()
+
 
 
     def vertexTypePercentage(self):
@@ -2380,6 +2497,7 @@ class ASI_RPM():
         return(demag/count)
 
 
+
     def changeQuenchedDisorder(self, QD = 0.01):
         '''
         Changes the magnitude of the QD while keeping the distribution on the lattice the same
@@ -2407,6 +2525,7 @@ class ASI_RPM():
         #print(diff)
         l1[:,:,7] = diff
         return(self(self.unit_cells_x, self.unit_cells_y,lattice = diff))
+
 
 
 class ASI_thermal(ASI_RPM):
@@ -2486,9 +2605,6 @@ class ASI_thermal(ASI_RPM):
         prob = np.exp(-deltaE/thermal_energy)
         print(deltaE, thermal_energy, self.rate0*prob, prob)
         return(self.rate0*prob, demagE)
-
-    #def thermalMC(self):
-
 
     def kineticMC(self):
         positions = []

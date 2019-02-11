@@ -51,6 +51,7 @@ of the class, such as, lattice gap, Msat, etc.
     - fieldSweepAnimation: Plots an animation of the field s
     - localCorrelation: Plots the local correlation
 
+
 #Magnetic ordering functions
 	- magneticOrdering
 	- structureFactor
@@ -99,7 +100,9 @@ of the class, such as, lattice gap, Msat, etc.
 	- vertexTypePercentage
 	- returnLattice
 	- demagEnergy
+
 	- correlation
+
 
 #Lattice manipulation functions
 	- clearLattice
@@ -120,3 +123,5 @@ of the class, such as, lattice gap, Msat, etc.
 	- changeQuenchedDisorder
 	- resetCount
 	- subtractCount
+	- changeQuenchedDisorder
+
