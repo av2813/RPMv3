@@ -32,6 +32,7 @@ of the class, such as, lattice gap, Msat, etc.
 #Lattice makers:
 	- square
 	- brickwork
+	- squareEdges
 	- tiltedSquare
 	- kagome
 	- shortShakti
@@ -100,7 +101,6 @@ of the class, such as, lattice gap, Msat, etc.
 	- vertexTypePercentage
 	- returnLattice
 	- demagEnergy
-
 	- correlation
 
 
