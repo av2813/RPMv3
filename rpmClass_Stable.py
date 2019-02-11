@@ -43,6 +43,9 @@ class ASI_RPM():
         self.unit_cell_len = (bar_length+vertex_gap)/2
         self.interType = 'dumbbell'
 
+    def mfmLoad(self, Mx, My):
+        self.lattice[:,:,3] = Mx
+        self.lattice[:,:,4] = My
 
     def save(self, file, folder = os.getcwd()):
         '''
@@ -274,24 +277,24 @@ class ASI_RPM():
         for x in range(0, self.side_len_x):
             for y in range(0, self.side_len_y):
                 if x%2!=0 and y%2==0:
-                    if (x-1)%4==0 and (y-2)%4==0:
+                    if (x-1)%4==0 and (y)%4==0:
                         if y%(self.side_len_y-1)!=0:
                             grid[x+1,y] = np.array([xfactor*(x+test)*self.unit_cell_len,(y)*self.unit_cell_len,0.,0.,0.,0.,0.,0, 0])
                             grid[x-1,y] = np.array([xfactor*(x-test)*self.unit_cell_len,(y)*self.unit_cell_len,0.,0.,0.,0.,0.,0, 0])
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,(y)*self.unit_cell_len,0.,1.,0.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0, None])
-                    elif (x-3)%4==0 and (y)%4==0:
+                    elif (x-3)%4==0 and (y+2)%4==0:
                         if y%(self.side_len_y-1)!=0:
                             grid[x+1,y] = np.array([xfactor*(x+test)*self.unit_cell_len,(y)*self.unit_cell_len,0.,0.,0.,0.,0.,0, 0])
                             grid[x-1,y] = np.array([xfactor*(x-test)*self.unit_cell_len,(y)*self.unit_cell_len,0.,0.,0.,0.,0.,0, 0])
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,y*self.unit_cell_len,0.,1.,0.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                     else:
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,y*self.unit_cell_len,0.,0,0,0,0,0,None])
-                elif x%2 ==0 and (y-1)%4==0:
+                elif x%2 ==0 and (y+1)%4==0:
                     if x%4==0:
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,yfactor*y*self.unit_cell_len,0.,0.5,(3**0.5/2),0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                     else:
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,yfactor*y*self.unit_cell_len,0.,-0.5,(3**0.5/2),0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
-                elif x%2 ==0 and (y-3)%4==0:
+                elif x%2 ==0 and (y-1)%4==0:
                     if x%4==0:
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,yfactor*y*self.unit_cell_len,0.,-0.5,(3**0.5/2),0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
                     else:
@@ -299,6 +302,7 @@ class ASI_RPM():
                 else:
                     if np.array_equal(grid[x,y,0:2], [0., 0.]):
                         grid[x,y] = np.array([xfactor*x*self.unit_cell_len,y*self.unit_cell_len,0.,0,0,0,0,0,None])
+
         self.lattice = grid
 
 
@@ -542,7 +546,9 @@ class ASI_RPM():
         X = grid[:,:,0].flatten()
         Y = grid[:,:,1].flatten()
         z = grid[:,:,2].flatten()
+        print(grid[:,:,3])
         Mx = grid[:,:,3].flatten()
+        print(grid[:,:,4])
         My = grid[:,:,4].flatten()
         Mz = grid[:,:,5].flatten()
         Hc = grid[:,:,6].flatten()
@@ -649,12 +655,19 @@ class ASI_RPM():
         ax = fig.add_subplot(111)
         ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax.set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
+
         graph = ax.scatter(X,Y,c = Type, marker = 'o', cmap = cm.plasma, zorder=2)
         #ax.scatter([-1, -1], [-1, -1], c = [1, 4])
         cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax, boundaries=np.linspace(0.5,4.5,5), ticks = [1, 2,3,4])
         #cb2.locator = MaxNLocator(nbins = 5)
         cb2.set_clim(0.5,4.5)
         #cb2.update_ticks()
+
+        graph = ax.scatter(X,Y,c = Vertex[:,:,4], marker = 'o', zorder=2)
+        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax)
+        cb2.locator = MaxNLocator(nbins = 5)
+        cb2.update_ticks()
+
         ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
         if show == True:
             plt.show()
@@ -2087,6 +2100,7 @@ class ASI_RPM():
             Vertex = np.zeros((self.side_len_x, self.side_len_y, 5))
         return(Vertex)
 
+
     def magMoment(self, angle):
         totalMag = 0
         for x in np.arange(0, self.side_len_x):
@@ -2108,6 +2122,33 @@ class ASI_RPM():
                     print("flip count =",self.lattice[x,y,7])        
         print("no of period doubled spins", periodDoubleSpinCount)
         return(periodDoubleSpinCount)
+
+
+    def vertexTypeMap(self):
+        '''
+        Only works with square
+        '''
+        Vertex = self.vertexType()
+        X = self.lattice[:,:,0].flatten()
+        Y = self.lattice[:,:,1].flatten()
+        z = self.lattice[:,:,2].flatten()
+        Mx = self.lattice[:,:,3].flatten()
+        My = self.lattice[:,:,4].flatten()
+        Mz = self.lattice[:,:,5].flatten()
+        Hc = self.lattice[:,:,6].flatten()
+        C = self.lattice[:,:,7].flatten()
+        charge = self.lattice[:,:,8].flatten()
+        Type = Vertex[:,:,4].flatten()
+        fig = plt.figure(figsize=(6,6))
+        ax = fig.add_subplot(111)
+        ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
+        graph = ax.scatter(X,Y,c = Vertex[:,:,4], marker = 'o')
+        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax)
+        cb2.locator = MaxNLocator(nbins = 5)
+        cb2.update_ticks()
+        ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
+        plt.show()
 
 
     def vertexTypePercentage(self):
