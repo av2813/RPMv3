@@ -112,30 +112,34 @@ def testDemag():
 	lattice = rpm.ASI_RPM(21,21)
 
 	lattice.squareEdges(Hc_mean = 0.05, Hc_std = 0.0)
-	lattice.fixEdges()
+	#lattice.fixEdges()
 	lattice.squareGroundState()
 	#lattice.fieldPlot()
 	#lattice.vertexTypeMap()
 	#lattice.graph()
-	#lattice.changeHc(11, 12, 1.)
-	lattice.flipSpin(11, 12)
 	lattice.changeHc(11, 12, 1.)
-	lattice.flipSpin(33, 34)
+	#lattice.flipSpin(11, 12)
+	lattice.changeHc(11, 12, 1.)
+	#lattice.flipSpin(33, 34)
 	lattice.changeHc(33, 34, 1.)
-	lattice.flipSpin(15, 16)
+	#lattice.flipSpin(15, 16)
 	lattice.changeHc(15, 16, 1.)
-	lattice.flipSpin(27, 34)
+	#lattice.flipSpin(27, 34)
 	lattice.changeHc(27, 34, 1.)
 	#lattice.flipSpin(19, 34)
-	#lattice.changeHc(25, 9, 1.)
+	lattice.changeHc(25, 9, 1.)
 	#lattice.flipSpin(25, 9)
-	lattice.vertexTypeMap()
-	lattice.fieldSweep(0.055/np.cos(np.pi/4), 5, 45., n=5, loops = 4, folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\SquareGroundStateSolver\FieldSweep\Square20x20_HappHc_v9', q1 = True)
-	lattice.graph()
-	lattice.vertexTypeMap()
-	lattice.graphCharge()
-	lattice.magneticOrdering()
-#testDemag()
+	#lattice.vertexTypeMap()
+	#lattice.fieldSweep(0.055/np.cos(np.pi/4), 5, 45., n=5, loops = 4, folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\SquareGroundStateSolver\FieldSweep\Square20x20_HappHc_v9', q1 = True)
+	#lattice.graph()
+	#lattice.vertexTypeMap()
+	#lattice.graphCharge()
+	#lattice.magneticOrdering()
+	lattice.structureFactor(-4*np.pi, 4*np.pi, 60)
+
+
+
+testDemag()
 
 def atoi(text):
     return int(text) if text.isdigit() else text
@@ -151,16 +155,16 @@ def natural_keys(text):
 
 
 #testDemag()
-folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\SquareGroundStateSolver\FieldSweep\Square20x20_HappHc_v9'
-counter = 0
-lattice = rpm.ASI_RPM(20,20)
+#folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\SquareGroundStateSolver\FieldSweep\Square20x20_HappHc_v9'
+#counter = 0
+#lattice = rpm.ASI_RPM(20,20)
 
-lattice.brickwork()
-lattice.save('test3')
-lattice.graph()
-lattice.kagome()
-lattice.load('test3.npz')
-lattice.graph()
+#lattice.brickwork()
+#lattice.save('test3')
+#lattice.graph()
+#lattice.kagome()
+#lattice.load('test3.npz')
+#lattice.graph()
 
 # for root, dirs, files in os.walk(folder):
 # 	print(files)

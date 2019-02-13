@@ -13,6 +13,8 @@ import matplotlib.animation as pla
 import matplotlib.mlab as mlab
 import time
 import seaborn as sns
+sns.set_style('ticks')
+sns.set_palette('coolwarm')
 
 
 
@@ -772,9 +774,10 @@ class ASI_RPM():
         Mx = grid[:,:,3]
         My = grid[:,:,4]
         M_vect = Mx+1j*My
+        Si_perp = np.substract()
         Mag_fft = np.fft.fft2(M_vect)
         kx = np.fft.fftfreq(self.side_len_x, self.unit_cells_x)
-        ky = np.fft.fftfreq(self.side_len_x, self.unit_cells_y)
+        ky = np.fft.fftfreq(self.side_len_y, self.unit_cells_y)
         Mag_fftR = np.real(Mag_fft)
         Mag_fftI = np.imag(Mag_fft)
         Mag_fftA = np.absolute(Mag_fft)
@@ -794,39 +797,51 @@ class ASI_RPM():
         qy_list = np.linspace(qlow, qhigh, number)
         test_st = np.zeros((number, number))
         N = np.count_nonzero(self.lattice[:,:, 6])
+        qx_grid, qy_grid = np.meshgrid(qx_list, qy_list)
+
 
         for qx in np.arange(0, number-1):
             for qy in np.arange(0, number-1):
                 stfact_A = 0
                 stfact_B = 0
-                for x in np.arange(0, self.side_len_x-1):
-                    for y in np.arange(0, self.side_len_y-1):
-                        if self.lattice[x,y,6]!=0:
-                            #st_fact1+=self.lattice[x,y,3:5]
-                            q_vec = np.array([qx_list[qx], qx_list[qy]])
-                            if np.all(q_vec!=np.array([0, 0]))==True:
-                                q_norm = q_vec/np.linalg.norm(q_vec)
-                            else:
-                                q_norm = q_vec
-                            S = self.lattice[x,y,3:5]
-                            #print(S, q_vec, q_norm)
-                            S_perp = np.subtract(S, np.dot(q_norm, S)*q_norm)
-                            #print(S_perp)
-                            stfact_A+=S_perp*np.cos(np.dot(q_vec, self.lattice[x,y, 0:2]))
-                            stfact_B+=S_perp*np.sin(np.dot(q_vec, self.lattice[x,y, 0:2]))
-                            #new_stfact+= (S_perp*np.cos(np.dot(q_vec, self.lattice[x,y, 0:2])))**2 + (S_perp*np.sin(np.dot(q_vec, self.lattice[x,y, 0:2])))**2
-                            #st_fact1 += np.complex(S_perp*np.cos(np.dot(q_vec, self.lattice[x,y, 0:2])), S_perp*np.sin(np.dot(q_vec, self.lattice[x,y, 0:2])))
-                            #st_fact2 += np.complex(S_perp*np.cos(np.dot(q_vec, self.lattice[x,y, 0:2])), S_perp*np.sin(np.dot(q_vec, self.lattice[x,y, 0:2])))
-                            #print(np.dot(self.lattice[x,y,3:5], self.lattice[x,y,3:5]))
-                            #print(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2]))
-                            #print(np.array([qx_list[qx], qy_list[qy]]))
-                            #print(self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])
-                            #print(np.cos(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])))
-                            #print(np.sin(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])))
-                            #structureFact[qx, qy, x, y] = np.dot(self.lattice[x,y,3:5], self.lattice[x,y,3:5])*np.complex(np.cos(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])), np.sin(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])))
-                            #st_fact+=np.dot(self.lattice[x,y,3:5], self.lattice[x,y,3:5])*np.complex(np.cos(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])), np.sin(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])))
-                #print(N, stfact_A, stfact_B)
-                test_st[qx, qy] = (1/N)*((stfact_A**2).sum()+(stfact_B**2).sum())
+                struct = 0
+                q_vec = np.array([qx_list[qx], qx_list[qy]])/(self.unit_cell_len)
+                if np.all(q_vec!=np.array([0, 0]))==True:
+                    q_norm = q_vec/np.linalg.norm(q_vec)
+                else:
+                    q_norm = q_vec
+                for x1 in np.arange(0, self.side_len_x):
+                    for y1 in np.arange(0, self.side_len_y):
+                        for x2 in np.arange(0, self.side_len_x):
+                            for y2 in np.arange(0, self.side_len_y):
+                                if self.lattice[x1,y1,6]!=0 and self.lattice[x2,y2,6]!=0:
+                                    #st_fact1+=self.lattice[x,y,3:5]
+                                    S_i = self.lattice[x1,y1,3:5]
+                                    S_j = self.lattice[x2,y2,3:5]
+                                    #print(S, q_vec, q_norm)
+                                    Si_perp = np.subtract(S_i, np.dot(q_norm, S_i)*q_norm)
+                                    Sj_perp = np.subtract(S_j, np.dot(q_norm, S_j)*q_norm)
+
+                                    r_ij = np.subtract(self.lattice[x1,y1,0:2], self.lattice[x2,y2,0:2])
+                                    struct+= np.dot(Si_perp,Sj_perp)* np.exp(1j * np.dot(q_vec, r_ij))
+                                    #print(S_perp)
+                                    #stfact_A+=S_perp*np.cos(np.dot(q_vec, self.lattice[x,y, 0:2]))
+                                    #stfact_B+=S_perp*np.sin(np.dot(q_vec, self.lattice[x,y, 0:2]))
+                                    #new_stfact+= (S_perp*np.cos(np.dot(q_vec, self.lattice[x,y, 0:2])))**2 + (S_perp*np.sin(np.dot(q_vec, self.lattice[x,y, 0:2])))**2
+                                    #st_fact1 += np.complex(S_perp*np.cos(np.dot(q_vec, self.lattice[x,y, 0:2])), S_perp*np.sin(np.dot(q_vec, self.lattice[x,y, 0:2])))
+                                    #st_fact2 += np.complex(S_perp*np.cos(np.dot(q_vec, self.lattice[x,y, 0:2])), S_perp*np.sin(np.dot(q_vec, self.lattice[x,y, 0:2])))
+                                    #print(np.dot(self.lattice[x,y,3:5], self.lattice[x,y,3:5]))
+                                    #print(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2]))
+                                    #print(np.array([qx_list[qx], qy_list[qy]]))
+                                    #print(self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])
+                                    #print(np.cos(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])))
+                                    #print(np.sin(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])))
+                                    #structureFact[qx, qy, x, y] = np.dot(self.lattice[x,y,3:5], self.lattice[x,y,3:5])*np.complex(np.cos(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])), np.sin(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])))
+                                    #st_fact+=np.dot(self.lattice[x,y,3:5], self.lattice[x,y,3:5])*np.complex(np.cos(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])), np.sin(np.dot(np.array([qx_list[qx], qy_list[qy]]), self.lattice[x,y, 0:2]-self.lattice[x,y, 0:2])))
+                        #print(N, stfact_A, stfact_B)
+                #test_st[qx, qy] = (1/N)*((stfact_A**2).sum()+(stfact_B**2).sum())
+                test_st[qx, qy] = (1/N)*np.absolute(struct)
+
         extent = [min(qx_list), max(qx_list), min(qy_list), max(qy_list)]
         plt.figure()
         plt.imshow(test_st, extent = extent)
@@ -1680,18 +1695,19 @@ class ASI_RPM():
                     if y2>self.side_len_y:
                         y2 = self.side_len_y
                     local = grid[x1:x2,y1:y2]
-                    pos_vert = grid[x,y,0:3]
-                    charges = np.array([])
-                    for mag, pos, Hc in zip(local[:,:,3:6], local[:, :, 0:3], local[:, :, 6]):
-                        if Hc!=0:
-                            direction = np.dot(mag, (pos-pos_vert))
-                            if pos-pos_vert>0:
-                                direction*=-1
-                            charges = np.append(net_charge, np.sign(direction))
-                    charge = np.sum(charges)
-
+                    #pos_vert = grid[x,y,0:3]
+                    #charges = np.array([])
+                    #for mag, pos, Hc in zip(local[:,:,3:6].flatten(), local[:, :, 0:3].flatten(), local[:, :, 6].flatten()):
+                    #    if Hc!=0:
+                    #        direction = np.dot(mag, (pos-pos_vert))
+                    #        if np.linalg.norm(pos-pos_vert)>0:
+                    #            direction*=-1
+                    #        charges = np.append(charges, np.sign(direction))
+                    #charge1 = np.sum(charges)
+                    #print(charge1)
                     #print(np.count_nonzero(local[:,:, 6]))
                     charge = (np.sum(local[0:2,0:2, 3:6])-np.sum(local[1:3,1:3, 3:6]))/np.count_nonzero(local[:,:, 6])
+                    #print(charge1, charge)
                     if self.type == 'kagome':
                         if x==0:
                             charge = np.sum(local[0,:,3]) -np.sum(local[1,:,3])+np.sum(local[:,0,4]) -np.sum(local[:,2,4])
@@ -1980,6 +1996,171 @@ class ASI_RPM():
         end = element.find(end_str)
         return(int(element[begin:end]))
 
+    def graphSpinDiff(self, ax, lattice1, lattice2):
+        
+        count_diff = lattice1[:,:,7] - lattice2[:,:,7]
+        count_diff = count_diff.flatten()
+        X = lattice1[:,:,0].flatten()
+        Y = lattice1[:,:,1].flatten()
+        z = lattice1[:,:,2].flatten()
+        Mx = lattice1[:,:,3].flatten()
+        My = lattice1[:,:,4].flatten()
+        Mz = lattice1[:,:,5].flatten()
+        Hc = lattice1[:,:,6].flatten()
+        Charge = lattice1[:,:,8].flatten()
+        print(Charge)
+        count_diff[np.where(Hc ==0)] = np.nan
+        Mx[np.where(Hc ==0)] = 0
+        My[np.where(Hc ==0)] = 0
+        #X[np.where(Hc==0)] = -1
+        #Y[np.where(Hc==0)] = -1
+        #Hc[np.where(Hc == 0)] = np.nan
+
+        plt.tick_params(axis='x',which='both', bottom=False, top=False, labelbottom=False)
+        plt.tick_params(axis='y', which='both',left=False,right=False,labelleft=False) 
+        plt.set_cmap('coolwarm')
+        graph = ax.scatter(X, Y, s = 50., c=count_diff, marker =None, linewidth=0.1)
+        graph = ax.quiver(X, Y, Mx, My,  angles='uv', scale_units='xy',  pivot = 'mid', linewidth=.5)  #width = 0.009,headlength =4, minshaft = 2,minlength = 3,
+        
+
+        #vgraph = ax.scatter(X, Y,s = 20., c = Charge, linewidth = 0.1, cmap = 'PuOr')
+        
+        ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set_ylim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set(adjustable='box-forced', aspect='equal')
+        plt.tight_layout()
+        return(ax)
+
+    def graphSpins(self, ax, lattice):
+        
+        X = lattice[:,:,0].flatten()
+        Y = lattice[:,:,1].flatten()
+        z = lattice[:,:,2].flatten()
+        Mx = lattice[:,:,3].flatten()
+        My = lattice[:,:,4].flatten()
+        Mz = lattice[:,:,5].flatten()
+        Hc = lattice[:,:,6].flatten()
+        Charge = lattice[:,:,8].flatten()
+        X[np.where(Hc==0)] = -1
+        Y[np.where(Hc==0)] = -1
+        Hc[np.where(Hc == 0)] = np.nan
+
+        plt.tick_params(axis='x',which='both', bottom=False, top=False, labelbottom=False)
+        plt.tick_params(axis='y', which='both',left=False,right=False,labelleft=False) 
+        plt.set_cmap('viridis')
+        graph = ax.quiver(X, Y, Mx, My, width = 0.009,headlength =4, minshaft = 2,minlength = 3, angles='uv', scale_units='xy',  pivot = 'mid')
+        #vgraph = ax.scatter(X, Y,s = 40., c = Charge, linewidth = 0.1) 
+        ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set_ylim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set(adjustable='box-forced', aspect='equal')
+        plt.tight_layout()
+        return(ax)
+
+    def periodDoubleAnalysis(self, folder, savefolder = None):
+        filenames = []
+        for root, sub, files in os.walk(folder):
+            for file in files:
+                if '1p414214e-01_Angle' in file:
+                    filenames.append(os.path.join(root,file))
+        i = 0
+        filenames.sort(key = self.sortFunc)
+        Lattice_list = []
+        for file in filenames:
+            fig, ax = plt.subplots(1,1)
+            self.load(file)
+            self.vertexCharge2()
+            #self.graphCharge()
+            print(self.returnLattice()[:,:,8])
+            Lattice_list.append(self.returnLattice())
+            if i>=2:
+                ax = self.graphSpinDiff(ax, self.returnLattice(), Lattice_list[i-2])
+            else:
+                ax = self.graphSpins(ax, self.returnLattice())
+            if savefolder == None:
+                plt.savefig(os.path.join(folder, 'FlipDiff')+str(i)+'.svg')
+                plt.savefig(os.path.join(folder, 'FlipDiff')+str(i)+'.png')
+            else:
+                plt.savefig(os.path.join(savefolder, 'FlipDiff')+str(i)+'.svg')
+                plt.savefig(os.path.join(savefolder, 'FlipDiff')+str(i)+'.png')
+            i+=1
+
+    def folderAnalysis(self, folder, savefolder = None):
+        for root, dirs, files in os.walk(folder):
+            new_files = list(filter(lambda x: 'Lattice_counter' in x, files))
+            new_files.sort(key = self.sortFunc)
+        counter = []
+        loops = []
+        mag = []
+        corr = []
+        monopole = []
+        energy = [] 
+        fieldstr = []
+        xticks_label = []
+        xticks_pos = []
+        i=0
+        for file in new_files:
+            counter.append(self.sortFunc(file))
+            loops.append(self.sortFunc(file, '_Loop','_FieldA'))
+            if '0p000000e+00_Angle' in file:
+                xticks_pos.append(counter[-1])
+                xticks_label.append(str(loops[-1]))
+            if loops[-1]!=0:
+                if i ==0:
+                    cutoff = counter[-1]
+                    i+=1
+                self.load(os.path.join(root,new_files[counter[-cutoff]]))
+                previous = copy.deepcopy(self)
+                self.clearLattice()
+                self.load(os.path.join(root, file))
+                corr.append(self.correlation(self, previous))
+            else: 
+                corr.append(1)
+                self.load(os.path.join(root, file))
+            #Happlied = float(file[file.find('Applied')+7:file.find('_Angle')].replace('p', '.'))
+            #fieldstr.append(Happlied)
+            mag.append(self.netMagnetisation())
+            monopole.append(self.monopoleDensity())
+            energy.append(self.vertexEnergy())
+        print(counter, loops,corr, mag, monopole, energy)
+        sns.set_style('ticks')
+        sns.set_style({'axes.grid':True})
+        fig, axes = plt.subplots(2,2)
+        axes[0,0].plot(counter, corr)
+        axes[0,0].set_xlabel('Minor Loop')
+        axes[0,0].set_ylabel('Correlation')
+        axes[0,0].set_xticks(xticks_pos)
+        axes[0,0].set_xticklabels(xticks_label)
+        axes[0,0].set_xlim(min(counter), max(counter))
+        axes[0,1].plot(counter, (np.array(mag)[:,0]+np.array(mag)[:,1]))
+        axes[0,1].set_xlabel('Minor Loop')
+        axes[0,1].set_ylabel('Magnetisation')
+        axes[0,1].set_xticks(xticks_pos)
+        axes[0,1].set_xticklabels(xticks_label)
+        axes[0,1].set_xlim(min(counter), max(counter))
+        axes[1,0].plot(counter, monopole)
+        axes[1,0].set_xlabel('Minor Loop')
+        axes[1,0].set_ylabel('Monopole density')
+        axes[1,0].set_xticks(xticks_pos)
+        axes[1,0].set_xticklabels(xticks_label)
+        axes[1,0].set_xlim(min(counter), max(counter))
+        axes[1,1].plot(counter, energy)
+        axes[1,1].set_xlabel('Minor Loop')
+        axes[1,1].set_ylabel('Vertex energy')
+        axes[1,1].set_xticks(xticks_pos)
+        axes[1,1].set_xticklabels(xticks_label)
+        axes[1,1].set_xlim(min(counter), max(counter))
+        if savefolder == None:
+            plt.savefig(os.path.join(folder, 'RPMsummary')+'.svg')
+            plt.savefig(os.path.join(folder, 'RPMsummary')+'.png')
+        else:
+            plt.savefig(os.path.join(savefolder, 'RPMsummary')+'.svg')
+            plt.savefig(os.path.join(savefolder, 'RPMsummary')+'.png')
+        #plt.show()
+
+
+
+
+
     def correlationAll(self, folder):
         counter= []
         loops = []
@@ -2116,8 +2297,8 @@ class ASI_RPM():
         #The density is then calculated by dividing by the total area minus the edges
         self.vertexCharge2()
         grid = self.lattice
-        #magcharge = grid[:,:,8].flatten()
-        return(np.nanmean(np.absolute(grid[:,:,8])))
+        magcharge = grid[:,:,8].flatten()
+        return(np.nanmean(np.absolute(magcharge)))
 
     def returnUnitCellLen(self):
         return(float(self.unit_cell_len))
@@ -2225,7 +2406,10 @@ class ASI_RPM():
         ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
         plt.show()
 
-
+    def vertexEnergy(self):
+        vertices = np.array(self.vertexTypePercentage())
+        venergy = 0*vertices[0] + ((2**0.5-1)/(2**0.5-0.5))*vertices[1] + 1.*vertices[2] + (4*2**0.5/(2*2**0.5-1))*vertices[3]
+        return(venergy)
 
     def vertexTypePercentage(self):
         '''

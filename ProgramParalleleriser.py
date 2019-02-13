@@ -27,6 +27,7 @@ lattice = rpm.ASI_RPM(size,size,bar_length = bar_length, \
         			bar_width = bar_width, magnetisation = magnetisation)
 
 #lattice.square(Hc, Hc_std1)
+
 #lattice.save('1SquarePeriodDoublingLattice20x20')
 #lattice.square(Hc, Hc_std1)
 #lattice.save('2SquarePeriodDoublingLattice20x20')
