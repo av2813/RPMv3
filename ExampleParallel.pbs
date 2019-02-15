@@ -1,0 +1,60 @@
+## interpreter directive - this is a shell script
+#!/bin/sh
+#
+## ask PBS for time (format hh:mm:ss)
+#PBS -l walltime=24:00:00
+#
+## ask for one node with 1 cpus and total 1gb memory (per node)
+#PBS -l select=1:ncpus=1:mem=1GB
+#PBS -J 0-3249
+
+## the number of subjobs in queue
+#
+#
+##load application module
+#
+module load anaconda3
+echo BeforePythonCode
+
+#
+##file management - Copy input file to TMPDIR
+echo $TMPDIR
+cp -avr $WORK/RPM/Code/Version2/SquarePeriodDoublev3/Square_PeriodDoublev2/ $TMPDIR
+cp $WORK/RPM/Code/Version2/SquarePeriodDoublev3/rpmClass_Stable.py $TMPDIR
+cp $WORK/RPM/Code/Version2/SquarePeriodDoublev3/1SquarePeriodDoublingLattice20x20.npz $TMPDIR
+cp $WORK/RPM/Code/Version2/SquarePeriodDoublev3/2SquarePeriodDoublingLattice20x20.npz $TMPDIR
+cp $WORK/RPM/Code/Version2/SquarePeriodDoublev3/3SquarePeriodDoublingLattice20x20.npz $TMPDIR
+cp $WORK/RPM/Code/Version2/SquarePeriodDoublev3/4SquarePeriodDoublingLattice20x20.npz $TMPDIR
+cp $WORK/RPM/Code/Version2/SquarePeriodDoublev3/5SquarePeriodDoublingLattice20x20.npz $TMPDIR
+
+
+ls
+echo
+#
+##command line
+echo RunningCode
+cp $TMPDIR/1SquarePeriodDoublingLattice20x20.npz $TMPDIR/Square_PeriodDoublev2/
+cp $TMPDIR/2SquarePeriodDoublingLattice20x20.npz $TMPDIR/Square_PeriodDoublev2/
+cp $TMPDIR/3SquarePeriodDoublingLattice20x20.npz $TMPDIR/Square_PeriodDoublev2/
+cp $TMPDIR/4SquarePeriodDoublingLattice20x20.npz $TMPDIR/Square_PeriodDoublev2/
+cp $TMPDIR/5SquarePeriodDoublingLattice20x20.npz $TMPDIR/Square_PeriodDoublev2/
+cp $TMPDIR/rpmClass_Stable.py $TMPDIR/Square_PeriodDoublev2/
+cd $TMPDIR/Square_PeriodDoublev2/
+
+timeout 23.5h python SquareRAND20x20_PeriodDouble.$PBS_ARRAY_INDEX.py
+
+echo FinishedCode
+#
+##file management - Move output files to WORK directory
+
+
+echo CopiedFiles
+cp -a * $EPHEMERAL/RPM/SquarePeriodDoubleRAND/
+
+## Diagnostics
+#
+echo ------------------------------------------------------------------------------------------------------------------
+ls -la /tmp/
+nvidia-smi
+pbsnodes -a
+#

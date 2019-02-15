@@ -505,15 +505,15 @@ class ASI_RPM():
         fig, ax = plt.subplots(ncols = 2,sharex=True, sharey=True, num = 'test')
         plt.set_cmap(cm.plasma)
         graph = ax[0].quiver(X, Y, Mx, My, Hc, angles='uv', scale_units='xy',  pivot = 'mid')     #
-        ax[0].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
-        ax[0].set_ylim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax[0].set_xlim([-1*self.unit_cell_len+np.min(X), np.max(X)+self.unit_cell_len])
+        ax[0].set_ylim([-1*self.unit_cell_len+np.min(Y), np.max(Y)+self.unit_cell_len])
         ax[0].set_title('Coercive Field')
         cb1 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[0], format='%.2e')
         cb1.locator = MaxNLocator(nbins = 7)
         cb1.update_ticks()
         graph = ax[1].quiver(X, Y, Mx, My, C, angles='xy', scale_units='xy',  pivot = 'mid')
-        ax[1].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
-        ax[1].set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
+        ax[1].set_xlim([-1*self.unit_cell_len+np.min(X), np.max(X)+self.unit_cell_len])
+        ax[1].set_ylim([-1*self.unit_cell_len+np.min(Y), np.max(Y)+self.unit_cell_len])
         ax[1].set_title('Counts')
         cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[1])
         cb2.locator = MaxNLocator( nbins = 5)
@@ -859,22 +859,39 @@ class ASI_RPM():
         grid = copy.deepcopy(self.lattice)
         unrelaxed = True
         Happlied[Happlied == -0.] = 0.
+        #Xpos = np.random.permutation(grid[:,:, 0].flatten()).tolist()
+        #Ypos = np.random.permutation(grid[:,:, 1].flatten()).tolist()
+        #print(Xpos, r'\n', Ypos)
+        Xpos, Ypos = np.where(grid[:,:,6] != 0)
+        positions = np.array(list(zip(Xpos, Ypos)))
+        #print(positions)
+        #Xpos = np.random.permutation(Xpos)
+        #Ypos = np.random.permutation(Ypos)
+        #print(Xpos, Ypos.tolist())
+        positions = np.random.permutation(positions)
+        #print(positions)
+        #time.sleep(20)
         while unrelaxed == True:
             flipcount = 0
-            for x in range(0, self.side_len_x):
-                for y in range(0, self.side_len_y):
-                    if abs(grid[x,y,6]) != 0:
-                        unit_vector = grid[x,y,3:6]
-                        field = np.dot(np.array(Happlied+self.Hlocal2(x,y, n=n)), unit_vector)
-                        #print(field)
-                        if field < -grid[x,y,6]:
-                            #print(grid[x,y,3:5])
-                            grid[x,y,3:5] = np.negative(grid[x,y,3:5])
-                            #print(grid[x,y,3:5])
-                            grid[x,y,:][grid[x,y,:]==0.] = 0.
-                            grid[x,y,7] += 1
-                            flipcount += 1
-                            #print(grid[x,y,3:5])
+            for pos in positions:
+                #print(pos, pos[0], pos[1])
+                x = pos[0]
+                y = pos[1]
+                if abs(grid[x,y,6]) != 0:
+
+                    unit_vector = grid[x,y,3:6]
+                    field = np.dot(np.array(Happlied+self.Hlocal2(x,y, n=n)), unit_vector)
+                    #print(field)
+                    if field < -grid[x,y,6]:
+                        #print(grid[x,y,3:5])
+                        grid[x,y,3:5] = np.negative(grid[x,y,3:5])
+                        #print(grid[x,y,3:5])
+                        grid[x,y,:][grid[x,y,:]==0.] = 0.
+                        grid[x,y,7] += 1
+                        flipcount += 1
+                        #print(grid[x,y,3:5])
+                else:
+                    print('wrong spin')
             print("no of flipped spins in relax", flipcount)
             grid[grid==-0.] = 0.
             if flipcount > 0:
@@ -970,11 +987,11 @@ class ASI_RPM():
         fieldloops = []
         vertex = []
         field_steps = np.array([0.])
-        field_steps = np.append(field_steps, np.linspace(Hc_min*0.9,Hmax,steps+1))
-        field_steps = np.append(field_steps, np.array([0.9*Hc_min]))
+        field_steps = np.append(field_steps, np.linspace(Hc_min*0.95,Hmax,steps+1))
+        field_steps = np.append(field_steps, np.array([0.95*Hc_min]))
         #field_steps = np.append(field_steps, np.linspace(Hmax,Hc_min*0.9,steps+1))
-        field_steps = np.append(field_steps, np.linspace(-(Hc_min*0.9),-Hmax,steps+1))
-        field_steps = np.append(field_steps, np.array([-0.9*Hc_min]))
+        field_steps = np.append(field_steps, np.linspace(-(Hc_min*0.95),-Hmax,steps+1))
+        field_steps = np.append(field_steps, np.array([-0.95*Hc_min]))
         #field_steps = np.append(field_steps, np.linspace(-Hmax,-(Hc_min*0.9),steps+1))
         print(field_steps)
         counter = 0
@@ -1760,6 +1777,7 @@ class ASI_RPM():
         calculates the local field at position x, y including the 
         field with n radius with n=1 just including nearest neighbours
         '''
+
         Hl = []
         x1 = x - n
         x2 = x + n+1

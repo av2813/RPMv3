@@ -19,7 +19,7 @@ Lattice = rpm.ASI_RPM(1, 1)
 #folder = r'D:\RPM_Rapid\SquarePeriodDouble\PeriodDoublingData_QD8.000002e-02_Width2.600000e-07_Count1'
 #folder= r'D:\RPM_Rapid\SquarePeriodDouble\PeriodDoublingData_QD6.400004e-02_Width3.400000e-07_Count3'
 
-folder = r'D:\RPM_Rapid\SquarePeriodDoubleRAND'
+folder = r'D:\RPM_Rapid\TetrisPeriodDouble'
 for root, subdirs, files in os.walk(folder):
 	for sub in subdirs:
 		if 'PeriodDoublingData' in sub:
