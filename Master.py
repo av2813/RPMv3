@@ -14,6 +14,7 @@ import argparse
 import cv2
 import math
 
+from shapely import geometry
 from matplotlib import pyplot as plt
 from scipy import spatial
 import itertools
@@ -33,6 +34,15 @@ folder = r'C:\Users\kjs18\Documents\RPM Code\Data\Square\MFMimage\Kagome'	#The f
 #initiate image recognition files
 kagomedetect.kagome(latticeim, imageim)
 #squaredetect.square(latticeim, imageim)
+
+Mx=[]	
+
+#Path to MFM image and lattice image
+imageim = r"C:\Users\Dell XPS 9530\Documents\PhD\Samples\KS002\As grown\Poster\dpole1.png"#Path to MFM image
+latticeim = r"C:\Users\Dell XPS 9530\Documents\PhD\Samples\KS002\As grown\Poster\dpole1.png"#Path to lattice image
+folder = r"C:\Users\Dell XPS 9530\Documents\PhD\RPM Code\Data\Vmonopole\Hc_std5\field_angle135\maxH1"	#The folder for the files to be saved in.
+
+
 npzfile = np.load('Outfile.npz')
 #loads magnetisation from files
 Mx = npzfile['arr_2']
@@ -58,6 +68,16 @@ size = 5					#Define the size of the lattice
 field_angle = 45.			#Angle at which the field will be applied in degrees
 field_max = 0.95*Hc/np.cos(field_angle/180*np.pi)			#Maximum field to by applied at field angle measured in Telsa 
 steps = 5					#Number of steps between the minimum value of the coercive field
+
+#Lattice Parameters
+size = 6					#Define the size of the lattice
+
+#Minor loop Parameters
+field_angle = [45, 135]
+		#Angle at which the field will be applied in degrees
+field_min = 0.95*Hc/np.cos(45/180*np.pi)				#Maximum field to by applied at field angle measured in Telsa 
+steps = 5	
+Hsteps = 5				#Number of steps between the minimum value of the coercive field
 							#and the maxium field specified above. Total number of steps in a 
 							#minor loop is = 4*(steps+1)
 neighbours = 4				#The radius of neighbouring spins that are included in the local
@@ -83,4 +103,16 @@ lattice.mfmLoad(Mx, My) #Loads MFM magnetisations
 lattice.graphCharge()
 plt.show()
 
+	lattice.mfmLoad(Mx, My) #Loads MFM magnetisations
+
+	for theta in field_angle:
+
+		for H in maxH:
+			newfolder = folder+'\\Hc_std'+str(j)+'\\field_angle'+str(theta)+'\\maxH'+str(H)
+			lattice.fieldSweep((field_max*H), steps, theta, n=5, loops=5, folder = newfolder, q1 = False)
+			
+'''
+
+lattice = rpm.ASI_RPM(size,size,bar_length = bar_length, \
+					vertex_gap = vertex_gap, bar_thickness = bar_thickness, \
 
