@@ -48,12 +48,12 @@ def redo(im_with_keypoints, IslandProperties):
 	cv2.waitKey(-1)
 
 	for i in range(int(len(newbar)*0.5)):
-		xl = int(newbar[2*i][0])
-		yl = int(newbar[2*i][1])
-		cl = (xl,yl)
-		xd = int(newbar[(2*i)+1][0])
-		yd = int(newbar[(2*i)+1][1])
+		xd = int(newbar[2*i][0])
+		yd = int(newbar[2*i][1])
 		cd = (xd,yd)
+		xl = int(newbar[(2*i)+1][0])
+		yl = int(newbar[(2*i)+1][1])
+		cl = (xl,yl)
 		xa, ya = (xd+xl)/2, (yd+yl)/2 #assigns middle coordinates
 		ca = (xa,ya)
 
@@ -87,33 +87,33 @@ def redo(im_with_keypoints, IslandProperties):
 			deg = 360-deg
 
 		if ( deg>45 and deg < 225):
-			cv2.arrowedLine(im_with_keypoints, cl, cd, (0,0,255),2)
+			cv2.arrowedLine(im_with_keypoints, cd, cl, (0,0,255),2)
 
 						
 		elif (deg<45 or deg > 225):
-			cv2.arrowedLine(im_with_keypoints, cl, cd, (255,0,0),2)
+			cv2.arrowedLine(im_with_keypoints, cd, cl, (255,0,0),2)
 
 		if (deg<degree_change) or (deg>(360-degree_change)):
-			mx = 1
+			mx = -1
 			my = 0
 			Mx.append(mx)
 			My.append(my)
 
 		elif (90-degree_change)<deg<(90+degree_change):
 			mx = 0
-			my = -1
+			my = 1
 			Mx.append(mx)
 			My.append(my)
 
 		elif (180-degree_change)<deg<(180+degree_change):
-			mx = -1
+			mx = 1
 			my = 0
 			Mx.append(mx)
 			My.append(my)
 
 		elif (270-degree_change)<deg<(270+degree_change):
 			mx = 0
-			my = 1
+			my = -1
 			Mx.append(mx)
 			My.append(my)
 
@@ -177,27 +177,27 @@ def connectdots(keypoints_dark, keypoints_light, im_with_keypoints, latticethres
 					
 					
 					if ( deg>45 and deg < 225):
-						cv2.arrowedLine(im_with_keypoints, cl, cd, (0,0,255),2)
+						cv2.arrowedLine(im_with_keypoints, cd, cl, (0,0,255),2)
 
 						
 					elif (deg<45 or deg > 225):
-						cv2.arrowedLine(im_with_keypoints, cl, cd, (255,0,0),2)
+						cv2.arrowedLine(im_with_keypoints, cd, cl, (255,0,0),2)
 
 					if (deg<degree_change) or (deg>(360-degree_change)):
-						mx = 1
+						mx = -1
 						my = 0
 
 					if (90-degree_change)<deg<(90+degree_change):
 						mx = 0
-						my = -1
+						my = 1
 
 					if (180-degree_change)<deg<(180+degree_change):
-						mx = -1
+						mx = 1
 						my = 0
 
 					if (270-degree_change)<deg<(270+degree_change):
 						mx = 0
-						my = 1
+						my = -1
 
 				
 					IslandProperties.append([xa,ya,mx,my])
@@ -308,8 +308,8 @@ def square(lattice, image):
 	cv2.waitKey(-1)
 
 	#SETS THE UPPER LIMIT FOR A CONNECTION TO BE A PERCENTAGE OF THE ISLAND DISTANCE
-	line_length_upper = ((Xmax-Xmin)/dimension)*0.8
-	line_length_lower = ((Xmax-Xmin)/dimension)*0.4
+	line_length_upper = ((Xmax-Xmin)/dimension)*0.7
+	line_length_lower = ((Xmax-Xmin)/dimension)*0.5
 
 
 	#READS THE MFM FILE AND CONVERTS IT TO GREYSCALE
@@ -323,10 +323,10 @@ def square(lattice, image):
 		cv2.line(gray,(int((vertex[0]-line_length_upper)),int((vertex[1] + line_length_upper))),(int(vertex[0]+line_length_upper),int(vertex[1] - line_length_upper)), 158,1)
 
 	#DRAWS GREY RECTANGLES AROUND THE EDGE OF THE LATTICE.
-	cv2.rectangle(gray,(0,int(Ymin-line_length_upper*0.5)), (300,0), 158, -1)
-	cv2.rectangle(gray,(0,int(Ymax+line_length_upper*0.5)), (300,300), 158, -1)
-	cv2.rectangle(gray,(int(Xmin-line_length_upper*0.5),0), (0,300), 158, -1)
-	cv2.rectangle(gray,(int(Xmax+line_length_upper*0.5),0), (300,300), 158, -1)
+	cv2.rectangle(gray,(0,int(Ymin-line_length_upper*0.5)), (10000,0), 158, -1)
+	cv2.rectangle(gray,(0,int(Ymax+line_length_upper*0.5)), (10000,10000), 158, -1)
+	cv2.rectangle(gray,(int(Xmin-line_length_upper*0.5),0), (0,10000), 158, -1)
+	cv2.rectangle(gray,(int(Xmax+line_length_upper*0.5),0), (10000,10000), 158, -1)
 
 
 	#ALLOWS THE USER TO CONTROL THE LEVEL OF THRESHOLD TO MAKE WHITE SPOTS BLACK. (NEED TO MOVE THIS TO A FUNCTION)
@@ -339,7 +339,7 @@ def square(lattice, image):
 	while(1):
 		hul=cv2.getTrackbarPos("Max", wnd)
 		#ret,thresh1 = cv2.threshold(image,hul,huh,cv2.THRESH_BINARY)
-		ret,whitedetect = cv2.threshold(image,hul,250,cv2.THRESH_BINARY_INV)
+		ret,whitedetect = cv2.threshold(gray,hul,250,cv2.THRESH_BINARY_INV)
 		#ret,thresh3 = cv2.threshold(image,hul,huh,cv2.THRESH_TRUNC)
 		#ret,thresh4 = cv2.threshold(image,hul,huh,cv2.THRESH_TOZERO)
 		#ret,thresh5 = cv2.threshold(image,hul,huh,cv2.THRESH_TOZERO_INV)
@@ -372,7 +372,7 @@ def square(lattice, image):
 		hul=cv2.getTrackbarPos("Max", wnd)
 
 		#ret,thresh1 = cv2.threshold(image,hul,huh,cv2.THRESH_BINARY)
-		ret,blackdetect = cv2.threshold(image,hul,250,cv2.THRESH_BINARY_INV)
+		ret,blackdetect = cv2.threshold(gray,hul,250,cv2.THRESH_BINARY_INV)
 		blackdetect = cv2.bitwise_not(blackdetect)
 		#ret,thresh3 = cv2.threshold(image,hul,huh,cv2.THRESH_TRUNC)
 		#ret,thresh4 = cv2.threshold(image,hul,huh,cv2.THRESH_TOZERO)
