@@ -18,7 +18,9 @@ from matplotlib import pyplot as plt
 from scipy import spatial
 import itertools
 import matplotlib.cm as cm
+from pylab import *
 import matplotlib.colors as cl
+import glob
 reload(rpm)
 
 
@@ -28,19 +30,18 @@ My=[]
 #Path to MFM image and lattice image
 imageim = r"C:\Users\Dell XPS 9530\Documents\PhD\Samples\KS002\As grown\Poster\dpole1.png"#Path to MFM image
 latticeim = r"C:\Users\Dell XPS 9530\Documents\PhD\Samples\KS002\As grown\Poster\dpole1.png"#Path to lattice image
-folder = r"C:\Users\Dell XPS 9530\Documents\PhD\RPM Code\Data\Vmonopole\Hc_std5\field_angle135\maxH1"	#The folder for the files to be saved in.
 folder = r"C:\Users\Dell XPS 9530\Documents\PhD\RPM Code\Data"	#The folder for the files to be saved in.
 
 
 #initiate image recognition files
 #kagomedetect.kagome(latticeim, imageim)
-squaredetect.square(latticeim, imageim)
-npzfile = np.load('Outfile.npz')
+#squaredetect.square(latticeim, imageim)
+#npzfile = np.load('Outfile.npz')
 #loads magnetisation from files
-Mx = npzfile['arr_2']
-My = npzfile['arr_3']
-print(Mx)
-print(My)
+#Mx = npzfile['arr_2']
+#My = npzfile['arr_3']
+#print(Mx)
+#print(My)
 
 #Material Parameters
 
@@ -117,3 +118,55 @@ def animation(folder):
 				print('OK')
 				
 				for angle in os.listdir(newpath2):
+					newpath3 = newpath2 + '\\' + angle
+				
+					for maxH in os.listdir(newpath3):
+						newpath4 = newpath3 +'\\' + maxH
+						os.chdir(newpath4)
+						print(newpath4)
+						
+						if os.path.isdir(newpath4+'\\pngs'):
+							r=1
+						else:						
+							os.makedirs("pngs")
+					
+			
+						for file in os.listdir(newpath4):
+
+							if file.endswith(".npz") and file.startswith("Lattice"):
+
+								lattice.load(os.path.join(newpath4,file))
+								lattice.graphChargesave(file)
+								file = file.replace(".npz",".png")
+								os.chdir(newpath4+'\\pngs')
+								plt.savefig(file)
+						
+							else:
+								r=1
+
+						imagefolder=newpath4+'\\pngs'
+						os.chdir(imagefolder)
+						video_name = 'Animation.avi'
+						images = []
+						for f in os.listdir(imagefolder):
+							if f.endswith(".png"):
+								images.append(f)
+						frame = cv2.imread(os.path.join(imagefolder, images[0]))
+						height, width, layers = frame.shape
+						video = cv2.VideoWriter(video_name, 0, 3, (width,height))
+						for image in images:
+							video.write(cv2.imread(os.path.join(imagefolder, image)))
+				
+						else:
+							r=1
+						cv2.destroyAllWindows()
+						video.release()
+
+
+
+
+					
+						
+
+
+listfolders(folder)
