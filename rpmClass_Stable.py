@@ -504,6 +504,41 @@ class ASI_RPM():
         #ax.set_ylim([-1*self.unit_cell_len, self.side_len_y*self.unit_cell_len])
         #ax.set_title('Vertex Charge Map')
 
+    def graphChargesave(self, name):
+        '''
+        Plots the positions and directions of the bar magnetisations as a quiver graph
+        '''
+        self.vertexCharge2()
+        grid = self.lattice
+        X = grid[:,:,0].flatten()
+        Y = grid[:,:,1].flatten()
+        z = grid[:,:,2].flatten()
+        print(grid[:,:,3])
+        Mx = grid[:,:,3].flatten()
+        print(grid[:,:,4])
+        My = grid[:,:,4].flatten()
+        Mz = grid[:,:,5].flatten()
+        Hc = grid[:,:,6].flatten()
+        C = grid[:,:,7].flatten()
+        MagCharge = grid[:,:,8].flatten()
+        
+        fig = plt.figure(figsize=(6,6))
+        ax = fig.add_subplot(111)
+        ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
+        ax.set_title("Vertex Magnetic Charge Map",fontsize=14)
+        #ax.set_xlabel("XAVG",fontsize=12)
+        #ax.set_ylabel("YAVG",fontsize=12)
+        #ax.grid(True,linestyle='-',color='0.75')
+
+        ax.quiver(X, Y, Mx, My, angles='xy', scale_units='xy',  pivot = 'mid', zorder=1)
+        # scatter with colormap mapping to z value
+        ax.scatter(X,Y,s=80,c=MagCharge, marker = 'o', cmap = cm.seismic, zorder=2, edgecolor='k' );
+        ax.set(adjustable='box-forced', aspect='equal')
+        plt.ticklabel_format(style='sci', scilimits=(0,0))
+        plt.tight_layout()
+     
+
     def fieldPlot(self, n=5):
         '''
         Plots the field direction and magnitude at each point on the graph
