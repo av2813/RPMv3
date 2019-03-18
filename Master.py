@@ -29,6 +29,7 @@ My=[]
 imageim = r"C:\Users\Dell XPS 9530\Documents\PhD\Samples\KS002\As grown\Poster\dpole1.png"#Path to MFM image
 latticeim = r"C:\Users\Dell XPS 9530\Documents\PhD\Samples\KS002\As grown\Poster\dpole1.png"#Path to lattice image
 folder = r"C:\Users\Dell XPS 9530\Documents\PhD\RPM Code\Data\Vmonopole\Hc_std5\field_angle135\maxH1"	#The folder for the files to be saved in.
+folder = r"C:\Users\Dell XPS 9530\Documents\PhD\RPM Code\Data"	#The folder for the files to be saved in.
 
 
 #initiate image recognition files
@@ -97,7 +98,22 @@ lattice = rpm.ASI_RPM(size,size,bar_length = bar_length, \
 					vertex_gap = vertex_gap, bar_thickness = bar_thickness, \
         			bar_width = bar_width, magnetisation = magnetisation)
 lattice.square(Hc, Hc/100)	#Specify whether it is a square or kagome lattice
-lattice.mfmLoad(Mx,My)
-lattice.graphCharge()
-plt.show()
-#lattice.fieldSweepAnimation(folder)
+#lattice.mfmLoad(Mx,My)
+
+
+#loops through folders from a defect loop and creates a video with microstate animation. (Need to add lattice counter onto the video)
+r=[]
+def animation(folder):
+	
+	for defect in os.listdir(folder):
+		if defect.endswith("Store"):
+			r=2
+		else:
+			newpath = folder + '\\' + defect
+			os.chdir(newpath)
+
+			for QD in os.listdir(newpath):
+				newpath2 = newpath + '\\' + QD
+				print('OK')
+				
+				for angle in os.listdir(newpath2):
