@@ -587,7 +587,6 @@ def grid(IslandProperties, im_with_keypoints, vertexlengthXbig, dimension, verte
 		My[(bar[0]),(bar[1])]=bar[3]
 
 
-	np.savez("mfmlayout", X, Y, Mx, My)
 
 	np.savez('Outfile', X, Y, Mx, My)
 
