@@ -2,7 +2,6 @@ __author__ = 'Alex'
 import matplotlib
 matplotlib.use('TkAgg')
 import rpmClass_Stable as rpm
-
 import tkinter as tk
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,8 +11,6 @@ from tkinter.filedialog import askopenfilename
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 reload(rpm)
-
-
 
 class Calculator:
 

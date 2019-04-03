@@ -11,6 +11,9 @@ reload(rpm)
 sns.set_style("ticks")
 sns.set_palette("colorblind")
 
+lattice = rpm.ASI_RPM(16,16)
+lattice.square(0.1, 0.10)
+
 def testDumbbellvsDipole():
 	'''
 	To test the difference between the dumbbell and the dipole model
@@ -101,12 +104,14 @@ def graphingTest():
 	test all the graphing software
 	'''
 	lattice= rpm.ASI_RPM(20, 20)
-	lattice.square()
-	lattice.graph()
-	lattice.graphCharge()
+	lattice.periodicSquare()
+	#lattice.square()
+	lattice.randomMag()
+	#lattice.graph()
+	#lattice.graphCharge()
 	lattice.fieldPlot()
-	lattice.vertexTypeMap()
-	lattice.magneticOrdering()
+	#lattice.vertexTypeMap()
+	#lattice.magneticOrdering()
 
 def testDemag():
 	lattice = rpm.ASI_RPM(21,21)
@@ -139,8 +144,19 @@ def testDemag():
 	lattice.structureFactor(-4*np.pi, 4*np.pi, 60)
 
 
+def latticePeriodic():
+	lattice.squarePeriodic(0.1, 0.05)
+	lattice.relaxPeriodic(n = 3)
+	lattice.fieldSweepPeriodic(0.1, 20, 45, n = 5, loops = 5)
 
-testDemag()
+latticePeriodic()
+
+#graphingTest()
+#Lattice.quenchedOrder(pattern = np.array([[1.1, 0.9], [0.9, 1.1]]))
+#Lattice.fieldSweepAdaptive(0.1, 20, 45.)
+#Lattice.quenchedOrder(pattern = np.array([[0.9, 1.1], [1.1,0.9]]))
+#Lattice.quenchedOrder(pattern = np.array([[0.9, 0.9], [1.1,1.1]]))
+#Lattice.quenchedOrder(pattern = np.array([[1.1,0.9]]))
 
 def atoi(text):
     return int(text) if text.isdigit() else text

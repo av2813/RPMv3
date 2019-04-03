@@ -12,9 +12,8 @@ from scipy.stats import norm
 import matplotlib.animation as pla
 import matplotlib.mlab as mlab
 import time
-import seaborn as sns
-sns.set_style('ticks')
-sns.set_palette('coolwarm')
+import scipy.interpolate as spi
+
 
 
 
@@ -92,13 +91,20 @@ class ASI_RPM():
         self.lattice = npzfile['arr_0']
 
 
-    def quenchedOrder(self, pattern = np.array([[0.95, 1.05], [1.05, 0.95]])):
-        self.lattice[:,:,6] = self.Hc_mean
+    def quenchedOrder(self, pattern = np.array([[1.1, 0.9], [0.9, 1.1]])):
+        self.lattice[:,:,6] = self.Hc
         lat_pattern = np.tile(pattern, (self.side_len_x, self.side_len_x))
         for x in range(0, self.side_len_x):
             for y in range(0, self.side_len_y):
                 if self.lattice[x,y,6]!=0:
-                    self.lattice[x,y,6] = self.Hc_mean*lat_pattern[x,y]
+                    print(pattern.shape)
+                    x_len, y_len = pattern.shape
+
+                    x_tile = int((x)%x_len)
+                    y_tile = int((y)%y_len)
+                    print(x_tile, y_tile)
+                    print(self.Hc*lat_pattern[x_tile,y_tile], pattern)
+                    self.lattice[x,y,6] = self.Hc*pattern[x_tile,y_tile]
         self.graph()
 
 
@@ -169,6 +175,30 @@ class ASI_RPM():
                     else:
                         grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,0.,0.,0,0,None])
         self.lattice = grid
+
+    def squarePeriodic(self, Hc_mean = 0.03, Hc_std = 0.05):
+        self.type = 'square'
+        self.Hc = Hc_mean                #Unit cell direction in x andy y
+        self.Hc_std = Hc_std
+        self.side_len_x = 2*self.unit_cells_x
+        self.side_len_y = 2*self.unit_cells_y
+        grid = np.zeros((2*self.unit_cells_x, 2*self.unit_cells_y, 9))        
+        for x in range(0, 2*self.unit_cells_x):
+            for y in range(0, 2*self.unit_cells_y):
+                if (x+y)%2 != 0:
+                    if y%2 == 0:
+                        xpos = x*(self.bar_length+self.vertex_gap)/2
+                        ypos = y*(self.bar_length+self.vertex_gap)/2
+                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,1.,0.,0., np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
+                    else:
+                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,1.,0.,np.random.normal(loc=Hc_mean, scale=Hc_std*Hc_mean, size=None),0,None])
+                else:
+                    if x%2 ==0 and x!=0 and y!=0 and x!=self.side_len_x-1 and y!=self.side_len_x-1:
+                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,0.,0.,0,0,0])
+                    else:
+                        grid[x,y] = np.array([x*self.unit_cell_len,y*self.unit_cell_len,0.,0.,0.,0.,0,0,None])
+        self.lattice = grid
+
 
     def brickwork(self, Hc_mean = 0.03, Hc_std = 0.05):
         '''
@@ -601,19 +631,24 @@ class ASI_RPM():
         field = np.zeros((self.side_len_x,self.side_len_y,3))
         for x in range(0, self.side_len_x):
             for y in range(0, self.side_len_y):
-                field[x,y,:] = self.Hlocal2(x, y, n=n)
+                field[x,y,:] = self.Hlocal2(x, y)
         X = grid[:,:,0].flatten()
         Y = grid[:,:,1].flatten()
-        Hx = field[:,:, 0].flatten()
-        Hy = field[:,:, 1].flatten()
-        Hz = field[:,:, 2].flatten()
-        fieldMag = (Hx**2+Hy**2+Hz**2)**0.5
+        Hx = field[:,:, 0]
+        Hy = field[:,:, 1]
+        Hz = field[:,:, 2]
+
+        #fieldMag = (Hx**2+Hy**2+Hz**2)**0.5
         fig, ax =plt.subplots(ncols = 2,sharex=True, sharey=True, num = 'test')
         plt.set_cmap(cm.plasma)
+        X_len = np.linspace(min(X), max(X), self.side_len_x)
+        Y_len = np.linspace(min(Y), max(Y), self.side_len_y)
+        print(np.shape(Hx), np.shape(X))
+        H_tot = (Hx**2+Hy**2)**0.5
         #graph = ax[0].streamplot(X, Y, Hx, Hy,color = fieldMag, angles='xy', scale_units='xy',  pivot = 'mid')
-        graph = ax[0].streamplot(X, Y, Hx, Hy,color = fieldMag)
-        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[1])
-        cb2.locator = MaxNLocator(nbins = 5)
+        graph = ax[0].streamplot(X_len, Y_len, Hx, Hy,color = H_tot, density = self.side_len_x/2)
+        #cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[1])
+        #cb2.locator = MaxNLocator(nbins = 5)
         #qk = ax[0].quiverkey(graph, 0.45, 0.9, 10, r'$mT$', labelpos='E',
         #           coordinates='figure')
         ax[0].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
@@ -774,7 +809,7 @@ class ASI_RPM():
         Mx = grid[:,:,3]
         My = grid[:,:,4]
         M_vect = Mx+1j*My
-        Si_perp = np.substract()
+        #Si_perp = np.subtract()
         Mag_fft = np.fft.fft2(M_vect)
         kx = np.fft.fftfreq(self.side_len_x, self.unit_cells_x)
         ky = np.fft.fftfreq(self.side_len_y, self.unit_cells_y)
@@ -849,6 +884,173 @@ class ASI_RPM():
         plt.xlabel(r'q_{x} (r.l.u)')
         plt.ylabel(r'q_{y} (r.l.u)')
         plt.show()
+
+    def checkNNSpins(self, grid, x, y, Happled = np.array([0.,0.,0.]), n = 10):
+        x1 = x - n
+        x2 = x + n+1
+        y1 = y - n
+        y2 = y + n+1
+
+        if x1<0:
+            x1 = 0
+        if x2>self.side_len_x:
+            x2 = self.side_len_x -1
+        if y1<0:
+            y1 = 0
+        if y2>self.side_len_y-1:
+            y2 = self.side_len_y-1
+
+        local = grid[x1:x2,y1:y2]
+
+
+
+    def relaxAdaptive(self, Happlied= np.array([0.,0.,0.]), n=10):
+        grid = copy.deepcopy(self.lattice)
+        unrelaxed = True
+        Happlied[Happlied == -0.] = 0.
+        #Xpos = np.random.permutation(grid[:,:, 0].flatten()).tolist()
+        #Ypos = np.random.permutation(grid[:,:, 1].flatten()).tolist()
+        #print(Xpos, r'\n', Ypos)
+        Xpos, Ypos = np.where(grid[:,:,6] != 0)
+        positions = np.array(list(zip(Xpos, Ypos)))
+        #print(positions)
+        #Xpos = np.random.permutation(Xpos)
+        #Ypos = np.random.permutation(Ypos)
+        #print(Xpos, Ypos.tolist())
+        positions = np.random.permutation(positions)
+        #print(positions)
+        #time.sleep(20)
+        while unrelaxed == True:
+            flipcount = 0
+            for pos in positions:
+                #print(pos, pos[0], pos[1])
+                x = pos[0]
+                y = pos[1]
+                if abs(grid[x,y,6]) != 0:
+                    unit_vector = grid[x,y,3:6]
+                    field = np.dot(np.array(Happlied + self.Hlocal2(x,y, n=n)), unit_vector)
+                    #print(field)
+                    if field < -grid[x,y,6]:
+                        #print(grid[x,y,3:5])
+                        grid[x,y,3:5] = np.negative(grid[x,y,3:5])
+                        #print(grid[x,y,3:5])
+                        grid[x,y,:][grid[x,y,:] == 0.] = 0.
+                        grid[x,y,7] += 1
+                        flipcount += 1
+
+                        #print(grid[x,y,3:5])
+                else:
+                    print('wrong spin')
+            print("no of flipped spins in relax", flipcount)
+            grid[grid==-0.] = 0.
+            flipcount_total = flipcount+flipcount_total
+            if flipcount > 0:
+                unrelaxed = True
+            else:
+                unrelaxed = False
+            self.lattice = grid
+            return(flipcount_total)
+
+    def fieldSweepAdaptive(self, Hmax, steps, Htheta, n=10, loops=1, folder = None, q1 = False):
+        '''
+        Sweeps through from 90% of the minimum Coercive field to Hmax at angle Htheta in steps. 
+        Total number of steps for a full minor loop is 4*(step+1).
+        The function then performs loops number of minor loops
+        The Lattice after each field step gets saved to a folder. if folder is None then the 
+        function saves the lattice to the current working directory
+        '''
+        if folder == None:
+            folder = os.getcwd()
+        M0 = copy.deepcopy(self)
+        testLattice = copy.deepcopy(self.lattice)
+        Htheta = np.pi*Htheta/180
+        testLattice[testLattice[:,:,6] == 0] = np.nan
+        if np.sin(Htheta) == 0:
+            angleFactor = np.cos(Htheta)
+        else:
+            angleFactor = np.sin(Htheta)
+        Hc_min = np.nanmin(testLattice[:,:,6])/angleFactor
+        Hc_array = testLattice[:,:,6].flatten()
+        Hc_array = np.append(Hc_array, Hmax)
+        Hc_array.sort()
+
+        Hc_func = spi.interp1d(np.linspace(0,1, Hc_array.size), Hc_array)
+        Hc_new = Hc_func(np.linspace(0,1,1000))
+
+        field_steps = Hc_new[np.where(Hc_new<=Hmax)]
+        idx = np.round(np.linspace(0, len(field_steps) - 1, steps)).astype(int)
+        field_steps = field_steps[idx]
+        field_steps = np.append(field_steps, Hmax)
+        #plt.figure()
+        #print(Hc_array.size, Hc_new.size, field_steps.size)
+        
+        #plt.plot(np.linspace(0,4, Hc_array.size),Hc_array,'o-')
+        #plt.plot(np.linspace(0,4,1000),Hc_new)
+        #plt.plot(np.linspace(0,1, field_steps.size),field_steps, '.')
+        #plt.show()
+        field_neg = -1*field_steps
+        field_steps = np.append(field_steps, field_neg)
+        idx = np.append(idx, idx[-1]+1)
+        print(Hc_array)
+        field_steps = field_steps/angleFactor
+        q = []
+        mag = []
+        monopole = []
+        fieldloops = []
+        vertex = []
+        counter = 0
+        period = None
+        i=0
+        self.relax(n = n)
+        tycles = 15
+        if folder == None:
+            self.save('InitialRPMLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals(), folder = folder)
+        else:
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            self.save('InitialRPMLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals(), folder = folder)
+        while i <= loops:
+            self.previous = copy.deepcopy(self)
+            for field in field_steps:
+                Happlied = field*np.array([np.cos(Htheta),np.sin(Htheta), 0.])
+                print('Happlied: ', Happlied)
+                print()
+                self.relax(Happlied,n)
+                fieldloops.append(np.array([i, field]))
+                mag.append(self.netMagnetisation())
+                monopole.append(self.monopoleDensity())
+                q.append(self.correlation(self.previous,self))
+                #vertex.append(self.vertexTypePercentage())
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+                self.save('Lattice_counter%(counter)d_Loop%(i)d_FieldApplied%(field)e_Angle%(Htheta)e' % locals(), folder = folder)
+                counter += 1
+
+            if q1 == True and period == None:
+                finalfield = abs(field)
+                namestr = '%(finalfield)e_A'% locals()
+                print(namestr)
+                period = self.determinePeriod2(folder, Hmax = namestr.replace('.', 'p'))
+                print('period:', period)
+                if period != None:
+                    loops = i + period
+                    tcycles=i
+            i += 1
+            print(i,loops, period)
+        self.save('FinalRPMLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals(), folder = folder)
+        fieldloops = np.array(fieldloops)
+        q = np.array(q)
+        mag = np.array(mag)
+        monopole = np.array(monopole)
+        vertex = np.array(vertex)
+        file = 'RPMStateInfo_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals()
+        parameters = np.array([Hmax, steps, Htheta, n, loops, self.Hc, self.Hc_std, period, tcycles])
+        print(parameters)
+        if folder == None:
+            folder = os.getcwd()
+            np.savez(os.path.join(folder, file), parameters, fieldloops, q, mag, monopole, vertex)
+        else:
+            np.savez(os.path.join(folder, file), parameters, fieldloops, q, mag, monopole, vertex)
     
     def relax(self, Happlied = np.array([0.,0.,0.]), n=10):
         '''
@@ -886,26 +1088,190 @@ class ASI_RPM():
                         #print(grid[x,y,3:5])
                         grid[x,y,3:5] = np.negative(grid[x,y,3:5])
                         #print(grid[x,y,3:5])
-                        grid[x,y,:][grid[x,y,:]==0.] = 0.
+                        grid[x,y,:][grid[x,y,:] == 0.] = 0.
                         grid[x,y,7] += 1
                         flipcount += 1
                         #print(grid[x,y,3:5])
                 else:
                     print('wrong spin')
             print("no of flipped spins in relax", flipcount)
-            grid[grid==-0.] = 0.
+            grid[grid == -0.] = 0.
             if flipcount > 0:
                 unrelaxed = True
             else:
                 unrelaxed = False
             self.lattice = grid
 
+    def relaxPeriodic(self, Happlied = np.array([0.,0.,0.]), n=10):
+        '''
+        Steps through all the the positions in the lattice and if the field applied along the direction
+        of the bar is negative and greater than the coercive field then it switches the magnetisation
+        of the bar
+        '''
+        grid = copy.deepcopy(self.lattice)
+        unrelaxed = True
+        Happlied[Happlied == -0.] = 0.
+        #Xpos = np.random.permutation(grid[:,:, 0].flatten()).tolist()
+        #Ypos = np.random.permutation(grid[:,:, 1].flatten()).tolist()
+        #print(Xpos, r'\n', Ypos)
+        Xpos, Ypos = np.where(grid[:,:,6] != 0)
+        positions = np.array(list(zip(Xpos, Ypos)))
+        #print(positions)
+        #Xpos = np.random.permutation(Xpos)
+        #Ypos = np.random.permutation(Ypos)
+        #print(Xpos, Ypos.tolist())
+        positions = np.random.permutation(positions)
+        #print(positions)
+        #time.sleep(20)
+        while unrelaxed == True:
+            flipcount = 0
+            for pos in positions:
+                #print(pos, pos[0], pos[1])
+                x = pos[0]
+                y = pos[1]
+                if abs(grid[x,y,6]) != 0:
+
+                    unit_vector = grid[x,y,3:6]
+                    field = np.dot(np.array(Happlied+self.HlocalPeriodic(x,y, n=n)), unit_vector)
+                    #print(field)
+                    if field < -grid[x,y,6]:
+                        #print(grid[x,y,3:5])
+                        grid[x,y,3:5] = np.negative(grid[x,y,3:5])
+                        #print(grid[x,y,3:5])
+                        grid[x,y,:][grid[x,y,:] == 0.] = 0.
+                        grid[x,y,7] += 1
+                        flipcount += 1
+                        #print(grid[x,y,3:5])
+                else:
+                    print('wrong spin')
+            print("no of flipped spins in relax", flipcount)
+            grid[grid == -0.] = 0.
+            if flipcount > 0:
+                unrelaxed = True
+            else:
+                unrelaxed = False
+            self.lattice = grid
+
+    def graphPeriodBC(self):
+        print('test')
+
+
+    def fieldSweepPeriodic(self, Hmax, steps, Htheta, n=10, loops=1, folder = None, q1 = False):
+        '''
+        Sweeps through from 90% of the minimum Coercive field to Hmax at angle Htheta in steps. 
+        Total number of steps for a full minor loop is 4*(step+1).
+        The function then performs loops number of minor loops
+        The Lattice after each field step gets saved to a folder. if folder is None then the 
+        function saves the lattice to the current working directory
+        '''
+        print(steps)
+        if folder == None:
+            folder = os.getcwd()
+        M0 = copy.deepcopy(self)
+        testLattice = copy.deepcopy(self.lattice)
+        Htheta = np.pi*Htheta/180
+        testLattice[testLattice[:,:,6] == 0] = np.nan
+        if np.sin(Htheta) == 0:
+            angleFactor = np.cos(Htheta)
+        else:
+            angleFactor = np.sin(Htheta)
+        Hc_min = np.nanmin(testLattice[:,:,6])/angleFactor
+        Hc_array = testLattice[:,:,6].flatten()
+        Hc_array = np.append(Hc_array, Hmax)
+        Hc_array = Hc_array[np.logical_not(np.isnan(Hc_array))]
+        Hc_array.sort()
+        print(Hc_array.tolist())
+
+        Hc_func = spi.interp1d(np.linspace(0,1, Hc_array.size), Hc_array)
+        Hc_new = Hc_func(np.linspace(0,1,1000))
+
+        field_steps = Hc_new[np.where(Hc_new<=Hmax)]
+        print(len(field_steps))
+        print(np.linspace(0, len(field_steps) - 1, steps))
+        idx = np.round(np.linspace(0, len(field_steps) - 1, steps)).astype(int)
+        print(steps, idx)
+        field_steps = field_steps[idx]
+        #field_steps = np.append(field_steps, Hmax)
+        #plt.figure()
+        #print(Hc_array.size, Hc_new.size, field_steps.size)
+        
+        #plt.plot(np.linspace(0,4, Hc_array.size),Hc_array,'o-')
+        #plt.plot(np.linspace(0,4,1000),Hc_new)
+        #plt.plot(np.linspace(0,1, field_steps.size),field_steps, '.')
+        #plt.show()
+        field_neg = -1*field_steps
+        print(field_neg)
+        field_steps = np.append(field_steps, field_neg)
+        #idx = np.append(idx, idx[-1]+1)
+        print(Hc_array)
+        field_steps = field_steps/angleFactor
+        q = []
+        mag = []
+        monopole = []
+        fieldloops = []
+        vertex = []
+        counter = 0
+        period = None
+        i=0
+        self.relax(n = n)
+        tcycles = 15
+        if folder == None:
+            self.save('InitialRPMLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals(), folder = folder)
+        else:
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            self.save('InitialRPMLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals(), folder = folder)
+        while i <= loops:
+            self.previous = copy.deepcopy(self)
+            for field in field_steps:
+                Happlied = field*np.array([np.cos(Htheta),np.sin(Htheta), 0.])
+                print('Happlied: ', Happlied)
+                print()
+                self.relaxPeriodic(Happlied, n)
+                fieldloops.append(np.array([i, field]))
+                mag.append(self.netMagnetisation())
+                monopole.append(self.monopoleDensity())
+                q.append(self.correlation(self.previous,self))
+                #vertex.append(self.vertexTypePercentage())
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+                self.save('Lattice_counter%(counter)d_Loop%(i)d_FieldApplied%(field)e_Angle%(Htheta)e' % locals(), folder = folder)
+                counter += 1
+
+            if q1 == True and period == None:
+                finalfield = abs(field)
+                namestr = '%(finalfield)e_A'% locals()
+                print(namestr)
+                period = self.determinePeriod2(folder, Hmax = namestr.replace('.', 'p'))
+                print('period:', period)
+                if period != None:
+                    loops = i + period
+                    tcycles=i
+            i += 1
+            print(i,loops, period)
+        self.save('FinalRPMLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals(), folder = folder)
+        fieldloops = np.array(fieldloops)
+        q = np.array(q)
+        mag = np.array(mag)
+        monopole = np.array(monopole)
+        vertex = np.array(vertex)
+        file = 'RPMStateInfo_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals()
+        parameters = np.array([Hmax, steps, Htheta, n, loops, self.Hc, self.Hc_std, period, tcycles])
+        print(parameters)
+        if folder == None:
+            folder = os.getcwd()
+            np.savez(os.path.join(folder, file), parameters, fieldloops, q, mag, monopole, vertex)
+        else:
+            np.savez(os.path.join(folder, file), parameters, fieldloops, q, mag, monopole, vertex)
+
+    
+
     def hysteresis(self, steps, Htheta, n =5, folder = None, Msatend = False):
         M0 = copy.deepcopy(self)
         testLattice = copy.deepcopy(self.lattice)
         Htheta = np.pi*Htheta/180
         testLattice[testLattice[:,:,6] == 0] = np.nan
-        if np.sin(Htheta)==0:
+        if np.sin(Htheta) == 0:
             angleFactor = np.cos(Htheta)
         else:
             angleFactor = np.sin(Htheta)
@@ -929,7 +1295,7 @@ class ASI_RPM():
             self.save('InitialRPMLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d' % locals(), folder = folder)
     
         self.previous = copy.deepcopy(self)
-        i=0
+        i = 0
         for j in field_steps:
             Happlied = j*np.array([np.cos(Htheta),np.sin(Htheta), 0.])
             print('Happlied: ', Happlied)
@@ -946,7 +1312,7 @@ class ASI_RPM():
                 if not os.path.exists(folder):
                     os.makedirs(folder)
                 self.save('Lattice_counter%(counter)d_Loop%(i)d_FieldApplied%(j)e_Angle%(Htheta)e' % locals(), folder = folder)
-            counter+=1
+            counter += 1
         self.save('FinalHystereisLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d' % locals(), folder = folder)
         fieldloops = np.array(fieldloops)
         q = np.array(q)
@@ -954,7 +1320,7 @@ class ASI_RPM():
         monopole = np.array(monopole)
         vertex = np.array(vertex)
         file = 'HysteresisStateInfo_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d' % locals()
-        parameters = np.array([Hmax, steps, Htheta, n, loops, self.Hc, self.Hc_std])
+        parameters = np.array([Hmax, steps, Htheta, n, self.Hc, self.Hc_std])
         print(parameters)
         if folder == None:
             folder = os.getcwd()
@@ -975,7 +1341,7 @@ class ASI_RPM():
         testLattice = copy.deepcopy(self.lattice)
         Htheta = np.pi*Htheta/180
         testLattice[testLattice[:,:,6] == 0] = np.nan
-        if np.sin(Htheta)==0:
+        if np.sin(Htheta) == 0:
             angleFactor = np.cos(Htheta)
         else:
             angleFactor = np.sin(Htheta)
@@ -1042,7 +1408,7 @@ class ASI_RPM():
         testLattice = copy.deepcopy(self.lattice)
         Htheta = np.pi*Htheta/180
         testLattice[testLattice[:,:,6] == 0] = np.nan
-        if np.sin(Htheta)==0:
+        if np.sin(Htheta) == 0:
             angleFactor = np.cos(Htheta)
         else:
             angleFactor = np.sin(Htheta)
@@ -1112,7 +1478,7 @@ class ASI_RPM():
         testLattice = copy.deepcopy(self.lattice)
         Htheta = np.pi*Htheta/180
         testLattice[testLattice[:,:,6] == 0] = np.nan
-        if np.sin(Htheta)==0:
+        if np.sin(Htheta) == 0:
             angleFactor = np.cos(Htheta)
         else:
             angleFactor = np.sin(Htheta)
@@ -1123,7 +1489,7 @@ class ASI_RPM():
         y = (Hmax-Hc_min)*(-x+1)*np.cos(steps*x*(2*np.pi))
         new_y = []
         for test in y:
-            if test>0:
+            if test > 0:
                 new_y.append(test+Hc_min)
             else:
                 new_y.append(test-Hc_min)
@@ -1149,7 +1515,7 @@ class ASI_RPM():
                 if not os.path.exists(folder):
                     os.makedirs(folder)
                 self.save('FORCLattice_counter%(counter)d_FieldApplied%(Happ)e_Angle%(Htheta)e' % locals(), folder = folder)
-            counter+=1
+            counter += 1
         self.save('FinalFORCLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d' % locals(), folder = folder)
         fieldloops = np.array(fieldloops)
         mag = np.array(mag)
@@ -1172,14 +1538,14 @@ class ASI_RPM():
         Hrange = np.linspace(Hmin, Hmax, Hsteps)
         for H in Hrange:
             if folder == None:
-                newfolder = os.getcwd()+'\\Hmax'+str(H/self.Hc)+'\\'
+                newfolder = os.getcwd() + '\\Hmax'+str(H/self.Hc)+'\\'
             else:
-                newfolder = folder+'\\Hmax'+str(H/self.Hc)+'\\'
+                newfolder = folder + '\\Hmax'+str(H/self.Hc)+'\\'
             print(folder)
-            self.fieldSweep(H, steps, Htheta, n=n, loops = loops, folder = newfolder, q1 = False)
+            self.fieldSweep(H, steps, Htheta, n = n, loops = loops, folder = newfolder, q1 = False)
         np.savez(os.path.join(folder, 'StateCode'), np.array(Hrange))
 
-    def searchRPM_monte(self, samples, Hmax, Htheta = 45, steps =10, n=3,loops=4, folder = None):
+    def searchRPM_monte(self, samples, Hmax, Htheta = 45, steps = 10, n = 3,loops = 4, folder = None):
         '''
         For randomise the starting state of the lattice and then 
         it will then perform a field sweep until RPM behaviour is observed or the number of loops (loops) is exceded
@@ -1199,7 +1565,7 @@ class ASI_RPM():
                 newfolder = os.getcwd()+'\\State'+str(state)+'\\'
             else:
                 newfolder = folder+'\\State'+str(state)+'\\'
-            self.fieldSweep(Hmax, steps, Htheta, n=n, loops = loops, folder = newfolder, q1 = True)
+            self.fieldSweep(Hmax, steps, Htheta, n = n, loops = loops, folder = newfolder, q1 = True)
         np.savez(os.path.join(folder, 'StateCode'), np.array(label))
 
     def searchRPM_single(self, Hmax, Htheta = 45, steps =10, n=3, loops=4, folder = None):
@@ -1222,21 +1588,21 @@ class ASI_RPM():
             self.save('InitialState', folder)
         for x in np.arange(0, self.side_len_x):
             for y in np.arange(0, self.side_len_y):
-                if self.lattice[x,y,6]!=0:
+                if self.lattice[x,y,6] != 0:
                     positions.append([x,y])
                     if folder == None:
-                        newfolder = os.getcwd()+'\\x'+str(x)+'y'+str(y)+'\\'
+                        newfolder = os.getcwd() + '\\x' + str(x) + 'y' + str(y) + '\\'
                     else:
-                        newfolder = folder+'\\x'+str(x)+'y'+str(y)+'\\'
-                    self.load(os.path.join(folder+r'\InitialState.npz'))
-                    self.flipSpin(x,y)
-                    self.fieldSweep(Hmax, steps, Htheta, n=n, loops = loops, folder = newfolder, q1 = True)
+                        newfolder = folder + '\\x' + str(x) + 'y'+str(y) + '\\'
+                    self.load(os.path.join(folder + r'\InitialState.npz'))
+                    self.flipSpin(x,y) 
+                    self.fieldSweep(Hmax, steps, Htheta, n = n, loops = loops, folder = newfolder, q1 = True)
         np.savez(os.path.join(folder, 'StateCode'), np.array(positions))
     
-    def searchRPM_multiple(self, samples, flips, Hmax, Htheta = 45, steps =10, n=3,loops=4, folder = None):
+    def searchRPM_multiple(self, samples, flips, Hmax, Htheta = 45, steps = 10, n = 3,loops = 4, folder = None):
         '''
         Will flip a number of bars magnetisation direction given by the variable flips at random positions on the lattice
-        it will then perform a field sweep until RPM behaviour is observed or the number of loops (loops) is exceded
+        it will then perform a field sweep until RPM be haviour is observed or the number of loops (loops) is exceded
         The field sweep parameters are specified by:
         Hmax = the maximum field to be applied
         Htheta = the direction which the field will be applied in (measured in degrees)
@@ -1255,19 +1621,19 @@ class ASI_RPM():
             self.load(folder+r'InitialState')
             switch = 0
             flip_loc = []
-            while switch<flips:
+            while switch < flips:
                 x = np.random.randint(0, self.side_len_x)
                 y = np.random.randint(0, self.side_len_y)
-                if grid[x,y,6]!=0:
+                if grid[x,y,6] != 0:
                     self.flipSpin(x,y)
-                    switch+=1
+                    switch += 1
                     flip_loc.append([x,y])
             positions.append(flip_loc)
             if folder == None:
-                newfolder = os.getcwd()+'\\x'+str(x)+'y'+str(y)+'\\'
+                newfolder = os.getcwd() + '\\x' + str(x) + 'y' + str(y) + '\\'
             else:
-                newfolder = folder+'\\x'+str(x)+'y'+str(y)+'\\'
-            self.fieldSweep(Hmax, steps, Htheta, n=n, loops = loops, folder = newfolder, q1 = True)
+                newfolder = folder + '\\x' + str(x) + 'y' + str(y) + '\\'
+            self.fieldSweep(Hmax, steps, Htheta, n = n, loops = loops, folder = newfolder, q1 = True)
         np.savez(os.path.join(folder, 'StateCode'), np.array(positions))
 
     def analysisAppliedFieldSweep(self, folder):
@@ -1326,13 +1692,13 @@ class ASI_RPM():
             j = 0
             for l2 in lattice_list:
                 if l1 == l2:
-                    break
+                    break 
                 else:
                     corr_list[i, j] = (self.correlation(l1, l2))
-                    j+=1
-            if i!=0:
+                    j += 1
+            if i != 0:
                 corr_compare.append(self.correlation(l1,Initial))
-            i+=1
+            i += 1
         fig = plt.figure()
         ax = fig.add_subplot(111)
         #print(statecode.shape)
@@ -1374,7 +1740,7 @@ class ASI_RPM():
         print(Initial)
         print(len(statecode))
         Hc_list = Initial.returnLattice()[:,:,6]
-        Hc_list[Hc_list==0] = np.nan
+        Hc_list[Hc_list == 0] = np.nan
         Hc_list = Hc_list.flatten()
         
         Hc_list = Hc_list[~np.isnan(Hc_list)]
@@ -1399,8 +1765,8 @@ class ASI_RPM():
             for l2,l4 in zip(lattice_list, lattice_init):
                 corr_list[i, j] = (self.correlation(l1, l2))
                 corr_init[i,j] = (self.correlation(l3,l4))
-                j+=1
-            i+=1
+                j += 1
+            i += 1
         fig = plt.figure()
         ax = fig.add_subplot(111)
         print(statecode.shape)
@@ -1467,7 +1833,7 @@ class ASI_RPM():
         plt.ylabel('Correlation')
         plt.xlabel('Number of field steps')
         for i in np.arange(1, loops):
-            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+            plt.axvline(i*(4*(steps + 1) - 1), color = 'k')
         plt.legend()
         plt.savefig(os.path.join(folder, 'CorrelationFieldsteps'))
 
@@ -1483,14 +1849,14 @@ class ASI_RPM():
         plt.ylabel('Magnetisation (x-dir)')
         plt.xlabel('Number of field steps')
         for i in np.arange(1, loops):
-            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+            plt.axvline(i*(4*(steps + 1) - 1), color = 'k')
         plt.legend()
         plt.savefig(os.path.join(folder, 'MagxFieldsteps'))
         mag_ploty = plt.figure('Magnetisation')
         ax_my = mag_ploty.add_subplot(111)
         ax_my.plot(2*mag[:,1],'.', label = Hmax)
         for i in np.arange(1, loops):
-            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+            plt.axvline(i*(4*(steps + 1) - 1), color = 'k')
         plt.ylabel('Magnetisation (y-dir)')
         plt.xlabel('Number of field steps')
         plt.legend()
@@ -1507,7 +1873,7 @@ class ASI_RPM():
         plt.ylabel('Monopole density')
         plt.xlabel('Number of field steps')
         for i in np.arange(1, loops):
-            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+            plt.axvline(i*(4*(steps + 1) -  1), color = 'k')
         plt.legend()
         plt.savefig(os.path.join(folder, 'MonopoleFieldsteps'))
 
@@ -1525,13 +1891,10 @@ class ASI_RPM():
         plt.ylabel('Vertex Percentage')
         plt.xlabel('Number of field steps')
         for i in np.arange(1, loops):
-            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+            plt.axvline(i*(4*(steps + 1) - 1), color = 'k')
         plt.legend()
         plt.savefig(os.path.join(folder, 'VertexFieldsteps'))
- 
 
-
-    
     
     def dumbbell(self, m, r, r0):
         '''
@@ -1540,16 +1903,13 @@ class ASI_RPM():
         '''
         m = np.array(m)
         r = np.array(r)
-        r0 = np.array(r0)
-
+        r0 = np.array(r0) 
         mag_charge = self.bar_thickness*self.magnetisation*self.bar_width
 
         r2 = np.subtract(np.transpose(r), r0).T + m*self.bar_length/2
         r1 = np.subtract(np.transpose(r), r0).T - m*self.bar_length/2
-        B = 1e-7*mag_charge*(r1/np.linalg.norm(r1)**3-r2/np.linalg.norm(r2)**3)
+        B = 1e-7*mag_charge*(r1/np.linalg.norm(r1)**3 - r2/np.linalg.norm(r2)**3)
         return(B)
-
-
 
     def plotMagnetisation(self, folder, mag, Hmax, loops, steps):
         '''
@@ -1558,18 +1918,18 @@ class ASI_RPM():
         '''
         mag_plotx = plt.figure('Magnetisation')
         ax_mx = mag_plotx.add_subplot(111)
-        ax_mx.plot(2*mag[:,0],'.', label = Hmax)
+        ax_mx.plot(2*mag[:,0],' .', label = Hmax)
         plt.ylabel('Magnetisation (x-dir)')
         plt.xlabel('Number of field steps')
         for i in np.arange(1, loops):
-            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+            plt.axvline(i*(4*(steps + 1) - 1), color = 'k')
         plt.legend()
         plt.savefig(os.path.join(folder, 'MagxFieldsteps'))
         mag_ploty = plt.figure('Magnetisation')
         ax_my = mag_ploty.add_subplot(111)
         ax_my.plot(2*mag[:,1],'.', label = Hmax)
         for i in np.arange(1, loops):
-            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+            plt.axvline(i*(4*(steps + 1) - 1), color = 'k')
         plt.ylabel('Magnetisation (y-dir)')
         plt.xlabel('Number of field steps')
         plt.legend()
@@ -1586,7 +1946,7 @@ class ASI_RPM():
         plt.ylabel('Monopole density')
         plt.xlabel('Number of field steps')
         for i in np.arange(1, loops):
-            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+            plt.axvline(i*(4*(steps + 1) - 1), color = 'k')
         plt.legend()
         plt.savefig(os.path.join(folder, 'MonopoleFieldsteps'))
 
@@ -1604,7 +1964,7 @@ class ASI_RPM():
         plt.ylabel('Vertex Percentage')
         plt.xlabel('Number of field steps')
         for i in np.arange(1, loops):
-            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+            plt.axvline(i*(4*(steps + 1) - 1), color = 'k')
         plt.legend()
         plt.savefig(os.path.join(folder, 'VertexFieldsteps'))
  
@@ -1625,7 +1985,7 @@ class ASI_RPM():
 
         r2 = np.subtract(np.transpose(r), r0).T + m*self.bar_length/2
         r1 = np.subtract(np.transpose(r), r0).T - m*self.bar_length/2
-        B = 1e-7*mag_charge*(r1/np.linalg.norm(r1)**3-r2/np.linalg.norm(r2)**3)
+        B = 1e-7*mag_charge*(r1/np.linalg.norm(r1)**3 - r2/np.linalg.norm(r2)**3)
         return(B)
 
 
@@ -1649,7 +2009,7 @@ class ASI_RPM():
         # that is the spatial components
         m_dot_R = np.tensordot(m, R, axes=1)
         # tensordot with axes=0 does a general outer product - we want no sum
-        B = 3 * m_dot_R * R / norm_R**5 - np.tensordot(m, 1 / norm_R**3, axes=0)
+        B = 3*m_dot_R*R/norm_R**5 - np.tensordot(m, 1/norm_R**3, axes=0)
         # include the physical constant
         B *= 1e-7
         return(B)
@@ -1665,10 +2025,10 @@ class ASI_RPM():
                 field[x,y,:] = self.Hlocal2(x, y, n=n)
         X = grid[:,:,0].flatten()
         Y = grid[:,:,1].flatten()
-        Hx = field[:,:, 0].flatten()
-        Hy = field[:,:, 1].flatten()
-        Hz = field[:,:, 2].flatten()
-        return(X,Y,Hx,Hy,Hz)
+        Hx = field[:,:,0].flatten()
+        Hy = field[:,:,1].flatten()
+        Hz = field[:,:,2].flatten()
+        return(X, Y, Hx, Hy, Hz)
 
     def vertexCharge(self):
         '''
@@ -1723,7 +2083,7 @@ class ASI_RPM():
                     #charge1 = np.sum(charges)
                     #print(charge1)
                     #print(np.count_nonzero(local[:,:, 6]))
-                    charge = (np.sum(local[0:2,0:2, 3:6])-np.sum(local[1:3,1:3, 3:6]))/np.count_nonzero(local[:,:, 6])
+                    charge = -(np.sum(local[0:2,0:2,3:6])-np.sum(local[1:3,1:3,3:6]))/np.count_nonzero(local[:,:,6])
                     #print(charge1, charge)
                     if self.type == 'kagome':
                         if x==0:
@@ -1762,7 +2122,7 @@ class ASI_RPM():
                     
     
     
-    def fieldCalc(self,mag, r0, pos):
+    def fieldCalc(self, mag, r0, pos):
         '''
         Tells the class what type of field calculation method 
         you want to use for the rest of the simulation
@@ -1772,7 +2132,7 @@ class ASI_RPM():
         if self.interType == 'dumbbell':
             return(self.dumbbell(mag, r0, pos))
     
-    def Hlocal2(self, x,y,n =1):
+    def Hlocal2(self, x, y, n=1):
         '''
         calculates the local field at position x, y including the 
         field with n radius with n=1 just including nearest neighbours
@@ -1797,6 +2157,55 @@ class ASI_RPM():
         m = grid[:,:,3:6]
         m = m.reshape(-1, m.shape[-1])
         r = grid[:,:,0:3]
+        r = r.reshape(-1, r.shape[-1])
+        r0 = self.lattice[x,y,0:3]
+
+        for pos, mag in zip(r, m):
+            if np.linalg.norm(pos-r0)/(n+1)<=1.0 and np.array_equal(pos, r0)!=True:
+                Hl.append(self.fieldCalc(mag, r0, pos))
+        return(sum(Hl))
+
+    def Hlocal3(self, x, y,z =0, radius=None):
+        if radius == None:
+            radius = 10*self.unit_cell_len
+        #print(radius)
+        #print(((self.lattice[:,:,0]-x)**2 + (self.lattice[:,:,1]-y)**2)**0.5)
+        #print(np.where(((self.lattice[:,:,0]-x)**2 + (self.lattice[:,:,1]-y)**2)**0.5<radius))
+        grid = self.lattice
+        #print(grid)
+        
+        m = grid[:,:,3:6]
+        m = m.reshape(-1, m.shape[-1])
+        r = grid[:,:,0:3]
+        r = r.reshape(-1, r.shape[-1])
+        r0 = np.array([x,y,z])
+        Hl = []
+        for pos, mag in zip(r, m):
+            if np.linalg.norm(pos-r0)<=radius and np.array_equal(pos, r0)!=True:
+                Hl.append(self.fieldCalc(mag, r0, pos))
+        return(sum(Hl))
+
+    def HlocalPeriodic(self, x, y, n=1):
+        '''
+        calculates the local field at position x, y including the 
+        field with n radius with n=1 just including nearest neighbours
+        '''
+        
+        Hl = []
+        x1 = x - n
+        x2 = x + n+1
+        y1 = y - n
+        y2 = y + n+1
+        indx = np.arange(x1,x2)
+        indy = np.arange(y1,y2)
+        #indpara = np.arange(0,9)
+        #indices = np.meshgrid(indx,indy, indpara)
+        grid = np.take(self.lattice, indx, axis = 0,  mode = 'wrap')
+        grid1 = np.take(grid, indy, axis = 1, mode = 'wrap')
+        #print(grid1)
+        m = grid1[:,:,3:6]
+        m = m.reshape(-1, m.shape[-1])
+        r = grid1[:,:,0:3]
         r = r.reshape(-1, r.shape[-1])
         r0 = self.lattice[x,y,0:3]
 
@@ -2008,16 +2417,24 @@ class ASI_RPM():
         grid[grid==-0.] = 0.
         self.lattice = grid
 
-    def sortFunc(self,element, begin_str = 'counter', end_str = '_Loop'):
+    def sortFunc(self, element, begin_str = 'counter', end_str = '_Loop', integer = True):
         print(element)
         begin = element.find(begin_str)+len(begin_str)
         end = element.find(end_str)
-        return(int(element[begin:end]))
+        if begin_str == '':
+            begin = 0
+        if end_str == '':
+            end = len(element)
+        if integer == True:
+            return(int(element[begin:end]))
+        else:
+            return(element[begin:end])
 
     def graphSpinDiff(self, ax, lattice1, lattice2):
-        
+
         count_diff = lattice1[:,:,7] - lattice2[:,:,7]
         count_diff = count_diff.flatten()
+        #count_diff[np.where(count_diff == 2)] = 0
         X = lattice1[:,:,0].flatten()
         Y = lattice1[:,:,1].flatten()
         z = lattice1[:,:,2].flatten()
@@ -2028,20 +2445,20 @@ class ASI_RPM():
         Charge = lattice1[:,:,8].flatten()
         print(Charge)
         count_diff[np.where(Hc ==0)] = np.nan
-        Mx[np.where(Hc ==0)] = 0
-        My[np.where(Hc ==0)] = 0
+        #Mx[np.where(Hc ==0)] = 0
+        #My[np.where(Hc ==0)] = 0
         #X[np.where(Hc==0)] = -1
         #Y[np.where(Hc==0)] = -1
         #Hc[np.where(Hc == 0)] = np.nan
 
         plt.tick_params(axis='x',which='both', bottom=False, top=False, labelbottom=False)
         plt.tick_params(axis='y', which='both',left=False,right=False,labelleft=False) 
-        plt.set_cmap('coolwarm')
-        graph = ax.scatter(X, Y, s = 50., c=count_diff, marker =None, linewidth=0.1)
-        graph = ax.quiver(X, Y, Mx, My,  angles='uv', scale_units='xy',  pivot = 'mid', linewidth=.5)  #width = 0.009,headlength =4, minshaft = 2,minlength = 3,
+        plt.set_cmap('copper')
+        #graph = ax.scatter(X, Y, s = 50., c=count_diff, marker =None, linewidth=0.1)
+        graph = ax.quiver(X, Y, Mx*self.unit_cell_len/self.side_len_x, My*self.unit_cell_len/self.side_len_y,count_diff,scale = self.unit_cell_len, pivot = 'mid')  #width = 0.009,headlength =4, minshaft = 2,minlength = 3,
         
 
-        #vgraph = ax.scatter(X, Y,s = 20., c = Charge, linewidth = 0.1, cmap = 'PuOr')
+        vgraph = ax.scatter(X, Y,s = 40., c = Charge, linewidth = 0.1, cmap = 'RdBu', vmax = 1, vmin = -1)
         
         ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax.set_ylim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
@@ -2049,8 +2466,410 @@ class ASI_RPM():
         plt.tight_layout()
         return(ax)
 
-    def graphSpins(self, ax, lattice):
+    def graphHc(self, ax, lattice1, lattice2):
+        '''
+        PLots the different in counts between lattice1 and lattice2 and scales the size
+        of the arrows linearly with Hc of the individual spins. Also plots monopoles
+        '''
+        X = lattice1[:,:,0].flatten()
+        Y = lattice1[:,:,1].flatten()
+        z = lattice1[:,:,2].flatten()
+        Mx = lattice1[:,:,3].flatten()
+        My = lattice1[:,:,4].flatten()
+        Mz = lattice1[:,:,5].flatten()
+        Hc = lattice1[:,:,6].flatten()
+        Charge = lattice1[:,:,8].flatten()
+        effHc = np.empty((self.side_len_x, self.side_len_y, 2))
+        for x in np.arange(0, self.side_len_x):
+            for y in np.arange(0, self.side_len_y):
+                if self.lattice[x,y,6]!=0:
+                    effHc[x,y,0] = (self.lattice[x, y, 6]-self.Hc)+self.Hc
+                    effHc[x,y,0] = effHc[x,y,0]*self.lattice[x,y,3]*10
+                    effHc[x,y,1] = (self.lattice[x, y, 6]-self.Hc)+self.Hc
+                    effHc[x,y,1] = effHc[x,y,1]*self.lattice[x,y,4]*10
+        effMx = effHc[:,:,0].flatten()
+        effMy = effHc[:,:,1].flatten()
+        #print(effMx.tolist())
+        #print(self.lattice[:,:,6].tolist())
+        count_diff = lattice1[:,:,7] - lattice2[:,:,7]
+        count_diff = count_diff.flatten()
+        count_diff[np.where(Hc == 0)] = np.nan
+        plt.tick_params(axis='x',which='both',bottom=False,top=False,labelbottom=False)
+        plt.tick_params(axis='y',which='both',left=False,right=False,labelleft=False) 
+        plt.set_cmap('copper')
+        #Hcgraph = ax.scatter(X,Y,s=effHc, cmap = 'Greens')
+        graph = ax.quiver(X, Y, effMx*self.unit_cell_len/self.side_len_x, effMy*self.unit_cell_len/self.side_len_y,count_diff, scale = self.unit_cell_len, pivot = 'mid')
+        vgraph = ax.scatter(X, Y, s = 40., c = Charge, linewidth = 0.1, cmap = 'RdBu', vmax = 1, vmin = -1)
+        ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set_ylim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set(adjustable='box-forced', aspect='equal')
+        plt.tight_layout()
+        return(ax)
+
+    def polarHysteresis(self, start_lattice, anglesteps, fieldsteps, anglerange = [0, 2*np.pi]):
+        '''
+        Does a hysteresis loops from a specific starting lattice and plots the coercive field as a function of angle
+        '''
+        return('To Do')
+
+    def identifyRPMchain(self, folder):
+        period = self.determinePeriod(folder)
+
+        filenames_pos = []
+        filenames_neg = []
+        latticelist_pos = []
+        latticelist_neg = []
+        for root, sub, files in os.walk(folder):
+            for file in files:
+                if 'd1p414214e-01_Angle' in file:
+                    filename = os.path.join(root,file)
+                    filenames_pos.append(filename)
+        filenames_pos.sort(key = self.sortFunc)
+        filenames_pos = list(reversed(filenames_pos))
+        print(filenames_pos)
+        for root, sub, files in os.walk(folder):
+            for file in files:
+                if '-1p414214e-01_Angle' in file:
+                    filename = os.path.join(root,file)
+                    filenames_neg.append(filename)
+        filenames_neg.sort(key = self.sortFunc)
+        filenames_neg = list(reversed(filenames_neg))
+        print(filenames_pos, filenames_neg)
+        if period == 2:
+            self.load(filenames_pos[0])
+            lattice1 = self.returnLattice()
+            self.load(filenames_pos[1])
+            lattice2 = self.returnLattice()
+            count_diff = lattice1[:,:,7] - lattice2[:,:,7]
+            print(count_diff)
+            print(np.where(count_diff == 1))
+            xpos_RPMspins, ypos_RPMspins = np.where(count_diff == 1)
+            print(xpos_RPMspins, ypos_RPMspins)
+            print(np.ediff1d(xpos_RPMspins))
+            print(np.ediff1d(ypos_RPMspins))
+            print(np.ediff1d(xpos_RPMspins)+np.ediff1d(ypos_RPMspins))
+            posdiff = np.ediff1d(xpos_RPMspins)+np.ediff1d(ypos_RPMspins)
+            RPM_P2_chain = [0]
+            i=0
+            RPM_chain = []
+            orgin_order=[]
+            state_chain = [0]
+            for xpos1, ypos1 in zip(xpos_RPMspins, ypos_RPMspins):
+                orgin_order.append([xpos1, ypos1])
+                for xpos2, ypos2 in zip(xpos_RPMspins, ypos_RPMspins):
+                    if (xpos2+ypos2)>(xpos1+ypos1):
+                        if abs(xpos2-xpos1)+abs(ypos2-ypos1)==2:
+                            print('these spins are connected:', xpos1,ypos1, xpos2, ypos2)
+                            if [xpos1, ypos1] not in RPM_chain:
+                                RPM_chain.append([xpos1, ypos1])
+                                state_chain.append(state_chain[-1])
+                            if [xpos2, ypos2] not in RPM_chain:
+                                RPM_chain.append([xpos2, ypos2])#
+                                state_chain.append(state_chain[-1])
+                            #RPM_chain.append([[xpos1, ypos1, i], [xpos2, ypos2, i]])
+            for pos in orgin_order:
+                if pos not in RPM_chain:
+                    RPM_chain.append(pos)
+            print(RPM_chain)
+            RPM_chain = np.array(RPM_chain)
+            print(RPM_chain[:,0], RPM_chain[:,1])
+            posdiff = np.ediff1d(RPM_chain[:,0])+np.ediff1d(RPM_chain[:,1])
+            print(posdiff)
+            for pos in posdiff:
+                if pos ==2:
+                    print('These spins are connected')
+                    RPM_P2_chain.append(RPM_P2_chain[-1])
+                else:
+                    RPM_P2_chain.append(RPM_P2_chain[-1]+1)
+            print(RPM_P2_chain)
+            fig = plt.figure(figsize=(9,9))
+            ax = fig.add_subplot(111)
+            X = lattice1[:,:,0].flatten()
+            Y = lattice1[:,:,1].flatten()
+            z = lattice1[:,:,2].flatten()
+            Mx = lattice1[:,:,3].flatten()
+            My = lattice1[:,:,4].flatten()
+            Mz = lattice1[:,:,5].flatten()
+            Hc = lattice1[:,:,6].flatten()
+            ax.quiver(X,Y,Mx*self.unit_cell_len/self.side_len_x,My*self.unit_cell_len/self.side_len_y,scale = self.unit_cell_len, pivot = 'mid')
+            ax.quiver(lattice1[RPM_chain[:,0], RPM_chain[:,1], 0],lattice1[RPM_chain[:,0], RPM_chain[:,1], 1],lattice1[RPM_chain[:,0], RPM_chain[:,1], 3]*self.unit_cell_len/self.side_len_x,lattice1[RPM_chain[:,0], RPM_chain[:,1], 4]*self.unit_cell_len/self.side_len_y,RPM_P2_chain,scale = self.unit_cell_len, pivot = 'mid')
+            ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+            ax.set_ylim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+            ax.set(adjustable='box-forced', aspect='equal')
+
+            plt.show()
+                #print(np.diff())
+
+    def changeLattice(self, lattice):
+        self.lattice = lattice
+
+    def monopoleDensityRPM(self, folder, n=1):
+        '''
+
+        '''
+        period = self.determinePeriod(folder)
+        filenames_pos = []
+        filenames_neg = []
+        latticelist_pos = []
+        latticelist_neg = []
+        for root, sub, files in os.walk(folder):
+            for file in files:
+                if 'd1p414214e-01_Angle' in file:
+                    filename = os.path.join(root,file)
+                    filenames_pos.append(filename)
+        filenames_pos.sort(key = self.sortFunc)
+        filenames_pos = list(reversed(filenames_pos))
+        print(filenames_pos)
+        for root, sub, files in os.walk(folder):
+            for file in files:
+                if '-1p414214e-01_Angle' in file:
+                    filename = os.path.join(root,file)
+                    filenames_neg.append(filename)
+        filenames_neg.sort(key = self.sortFunc)
+        filenames_neg = list(reversed(filenames_neg))
+        print(filenames_pos, filenames_neg)
+        for i, file_pos, file_neg in zip(np.arange(0, len(filenames_pos)), filenames_pos, filenames_neg):
+            if i == 0:
+                self.load(file_pos)
+                latticelist_pos.append(self.returnLattice())
+                self.load(file_neg)
+                latticelist_neg.append(self.returnLattice())
+                continue
+            self.load(file_pos)
+            latticelist_pos.append(self.returnLattice())
+            self.load(file_neg)
+            latticelist_neg.append(self.returnLattice())
+            #self.graphCharge()
+            print(i, len(latticelist_neg))
+            countdiff_neg = -latticelist_neg[i][:,:,7] + latticelist_neg[i-1][:,:,7]
+            countdiff_pos = -latticelist_pos[i][:,:,7] + latticelist_pos[i-1][:,:,7]
+            countdiff_neg[np.where(self.returnLattice()[:,:,6]==0)] = np.nan
+            countdiff_pos[np.where(self.returnLattice()[:,:,6]==0)] = np.nan
+            print(np.nanmean(countdiff_pos),countdiff_pos)
+            time.sleep(10)
+
+            coer = self.returnLattice()[:,:,6]
+            RPM_field_pos = np.zeros((self.side_len_x, self.side_len_y, 1))
+            RPM_monopole_pos = np.zeros((self.side_len_x, self.side_len_y, 1))
+            for x in np.arange(0, self.side_len_x):
+                for y in np.arange(0, self.side_len_y):
+                    if latticelist_pos[i][x,y,6]!=0:
+                        RPM_monopole_pos[x,y,0] = self.localMonopoleDensity(x,y,n)
+                        unit_vector = latticelist_pos[i][x,y,3:6]
+                        RPM_field_pos[x,y,0] = np.dot(np.array(self.Hlocal2(x,y, n=5)), unit_vector)
+            RPM_monopole_pos[np.where(coer == 0)] = np.nan
+            RPM_field_pos[np.where(coer == 0)] = np.nan
+
+            RPM_field_neg = np.zeros((self.side_len_x, self.side_len_y, 1))
+            RPM_monopole_neg = np.zeros((self.side_len_x, self.side_len_y, 1))
+            for x in np.arange(0, self.side_len_x):
+                for y in np.arange(0, self.side_len_y):
+                    if latticelist_neg[i][x,y,6]!=0:
+                        RPM_monopole_neg[x,y,0] = self.localMonopoleDensity(x,y,n)
+                        unit_vector = latticelist_neg[i][x,y,3:6]
+                        RPM_field_neg[x,y,0] = np.dot(np.array(self.Hlocal2(x,y, n=5)), unit_vector)
+            RPM_monopole_neg[np.where(coer == 0)] = np.nan
+            RPM_field_neg[np.where(coer == 0)] = np.nan
+            print(countdiff_pos)
+            #print(countdiff_pos)
+            #print(RPM_monopole)
+            monopole1p_pos = RPM_monopole_pos[np.where(countdiff_pos==2)].flatten()
+            monopole2p_pos = RPM_monopole_pos[np.where(countdiff_pos==1)].flatten()
+            monopole0p_pos = RPM_monopole_pos[np.where(countdiff_pos==0)].flatten()
+            monopole1p_neg = RPM_monopole_neg[np.where(countdiff_neg==2)].flatten()
+            monopole2p_neg = RPM_monopole_neg[np.where(countdiff_neg==1)].flatten()
+            monopole0p_neg = RPM_monopole_neg[np.where(countdiff_neg==0)].flatten()
+            monopole1p_pos = monopole1p_pos[np.logical_not(np.isnan(monopole1p_pos))]
+            monopole2p_pos = monopole2p_pos[np.logical_not(np.isnan(monopole2p_pos))]
+            monopole0p_pos = monopole0p_pos[np.logical_not(np.isnan(monopole0p_pos))]
+            monopole1p_neg = monopole1p_neg[np.logical_not(np.isnan(monopole1p_neg))]
+            monopole2p_neg = monopole2p_neg[np.logical_not(np.isnan(monopole2p_neg))]
+            monopole0p_neg = monopole0p_neg[np.logical_not(np.isnan(monopole0p_neg))]
+
+
+            field1p_pos = RPM_field_pos[np.where(countdiff_pos==2)].flatten()
+            field2p_pos = RPM_field_pos[np.where(countdiff_pos==1)].flatten()
+            field0p_pos = RPM_field_pos[np.where(countdiff_pos==0)].flatten()
+            field1p_neg = RPM_field_neg[np.where(countdiff_neg==2)].flatten()
+            field2p_neg = RPM_field_neg[np.where(countdiff_neg==1)].flatten()
+            field0p_neg = RPM_field_neg[np.where(countdiff_neg==0)].flatten()
+            field1p_pos = field1p_pos[np.logical_not(np.isnan(field1p_pos))]
+            field2p_pos = field2p_pos[np.logical_not(np.isnan(field2p_pos))]
+            field0p_pos = field0p_pos[np.logical_not(np.isnan(field0p_pos))]
+            field1p_neg = field1p_neg[np.logical_not(np.isnan(field1p_neg))]
+            field2p_neg = field2p_neg[np.logical_not(np.isnan(field2p_neg))]
+            field0p_neg = field0p_neg[np.logical_not(np.isnan(field0p_neg))]
+            if i==1:
+                break
+        return(field1p_pos,field2p_pos,field0p_pos,field1p_neg,field2p_neg,field0p_neg,monopole1p_pos,monopole2p_pos,monopole0p_pos,monopole1p_neg,monopole2p_neg,monopole0p_neg)
+            
+
+
+
+    def localMonopoleDensity(self, x, y, n):
+        x1 = x - n
+        x2 = x + n+1
+        y1 = y - n
+        y2 = y + n+1
         
+        if x1<0:
+            x1 = 0
+        if x2>self.side_len_x:
+            x2 = self.side_len_x -1
+        if y1<0:
+            y1 = 0
+        if y2>self.side_len_y-1:
+            y2 = self.side_len_y-1
+
+        local = self.lattice[x1:x2, y1:y2, :]
+        magcharge = local[:,:,8].flatten()
+        return(np.nanmean(np.absolute(magcharge)))
+
+    def determinePeriod2(self, folder, Hmax = '1p414214e-01_Angle'):
+        '''
+        Determines the period in the minor loop. 
+        '''
+        print(Hmax)
+        print(type(Hmax))
+        filenames_pos = []
+        filenames_neg = []
+        latticelist_pos = []
+        latticelist_neg = []
+        for root, sub, files in os.walk(folder):
+            for file in files:
+                checkstr = 'd'+Hmax
+                print(str(checkstr), file, str(checkstr) in file, file.find(checkstr))
+                if checkstr in file:
+                    print('pos')
+                    filename = os.path.join(root,file)
+                    filenames_pos.append(filename)
+        filenames_pos.sort(key = self.sortFunc)
+
+        for root, sub, files in os.walk(folder):
+            for file in files:
+                checkstr = '-'+Hmax
+                print(checkstr, file, checkstr in file)
+                if checkstr in file:
+                    print('neg')
+                    filename = os.path.join(root,file)
+                    filenames_neg.append(filename)
+        filenames_neg.sort(key = self.sortFunc)
+        print(filenames_pos, filenames_neg)
+        for i, file_pos, file_neg in zip(np.arange(0,len(filenames_neg)), reversed(filenames_pos), reversed(filenames_neg)):
+            if i == 0:
+                self.load(file_pos)
+                latticelist_pos.append(self.returnLattice())
+                self.load(file_neg)
+                latticelist_neg.append(self.returnLattice())
+                continue
+            self.load(file_pos)
+            latticelist_pos.append(self.returnLattice())
+            self.load(file_neg)
+            latticelist_neg.append(self.returnLattice())
+            #self.graphCharge()
+            #print(i, len(latticelist_neg))
+            corr_pos = np.array_equal(latticelist_pos[0][:,:,3:6], latticelist_pos[i][:,:,3:6])
+            corr_neg = np.array_equal(latticelist_neg[0][:,:,3:6], latticelist_neg[i][:,:,3:6])
+            print(corr_pos, corr_neg, i)
+            if corr_pos == True and corr_neg == True:
+                return(i)
+                break
+        self.load(filenames_neg[-1])
+
+
+    def trainingCycles(self, folder):
+        '''
+        Determines the number of training cycles required to reach RPM
+        '''
+        filenames_pos = []
+        filenames_neg = []
+        latticelist_pos = []
+        latticelist_neg = []
+        for root, sub, files in os.walk(folder):
+            for file in files:
+                if 'd1p414214e-01_Angle' in file:
+                    filename = os.path.join(root,file)
+                    filenames_pos.append(filename)
+        filenames_pos.sort(key = self.sortFunc)
+
+        for root, sub, files in os.walk(folder):
+            for file in files:
+                if '-1p414214e-01_Angle' in file:
+                    filename = os.path.join(root,file)
+                    filenames_neg.append(filename)
+        filenames_neg.sort(key = self.sortFunc)
+        print(filenames_pos, filenames_neg)
+        tcycles = 0
+        for i, file_pos, file_neg in zip(np.arange(0,len(filenames_neg)), filenames_pos, filenames_neg):
+            if i == 0:
+                self.load(file_pos)
+                latticelist_pos.append(self.returnLattice())
+                self.load(file_neg)
+                latticelist_neg.append(self.returnLattice())
+                continue
+            print(i)
+            self.load(file_pos)
+            latticelist_pos.append(self.returnLattice())
+            self.load(file_neg)
+            latticelist_neg.append(self.returnLattice())
+            #self.graphCharge()
+            #print(i, len(latticelist_neg))
+            corr_pos = np.array_equal(latticelist_pos[0][:,:,3:6], latticelist_pos[i][:,:,3:6])
+            corr_neg = np.array_equal(latticelist_neg[0][:,:,3:6], latticelist_neg[i][:,:,3:6])
+            print(corr_pos, corr_neg, i)
+            if corr_pos == True or corr_neg == True:
+                return(i)
+                break
+
+
+    def determinePeriod(self, folder):
+        '''
+        Determines the period in the minor loop. 
+        '''
+        filenames_pos = []
+        filenames_neg = []
+        latticelist_pos = []
+        latticelist_neg = []
+        for root, sub, files in os.walk(folder):
+            for file in files:
+                if 'd1p414214e-01_Angle' in file:
+                    filename = os.path.join(root,file)
+                    filenames_pos.append(filename)
+        filenames_pos.sort(key = self.sortFunc)
+
+        for root, sub, files in os.walk(folder):
+            for file in files:
+                if '-1p414214e-01_Angle' in file:
+                    filename = os.path.join(root,file)
+                    filenames_neg.append(filename)
+        filenames_neg.sort(key = self.sortFunc)
+        print(filenames_pos, filenames_neg)
+        for i, file_pos, file_neg in zip(np.arange(0,len(filenames_neg)), reversed(filenames_pos), reversed(filenames_neg)):
+            if i == 0:
+                self.load(file_pos)
+                latticelist_pos.append(self.returnLattice())
+                self.load(file_neg)
+                latticelist_neg.append(self.returnLattice())
+                continue
+            self.load(file_pos)
+            latticelist_pos.append(self.returnLattice())
+            self.load(file_neg)
+            latticelist_neg.append(self.returnLattice())
+            #self.graphCharge()
+            #print(i, len(latticelist_neg))
+            corr_pos = np.array_equal(latticelist_pos[0][:,:,3:6], latticelist_pos[i][:,:,3:6])
+            corr_neg = np.array_equal(latticelist_neg[0][:,:,3:6], latticelist_neg[i][:,:,3:6])
+            print(corr_pos, corr_neg, i)
+            if corr_pos == True or corr_neg == True:
+                return(i)
+                break
+
+
+
+    def graphSpins(self, ax, lattice):
+        '''
+        Just plots the spins
+        '''
         X = lattice[:,:,0].flatten()
         Y = lattice[:,:,1].flatten()
         z = lattice[:,:,2].flatten()
@@ -2065,16 +2884,114 @@ class ASI_RPM():
 
         plt.tick_params(axis='x',which='both', bottom=False, top=False, labelbottom=False)
         plt.tick_params(axis='y', which='both',left=False,right=False,labelleft=False) 
-        plt.set_cmap('viridis')
+        #plt.set_cmap('viridis')
         graph = ax.quiver(X, Y, Mx, My, width = 0.009,headlength =4, minshaft = 2,minlength = 3, angles='uv', scale_units='xy',  pivot = 'mid')
-        #vgraph = ax.scatter(X, Y,s = 40., c = Charge, linewidth = 0.1) 
+        vgraph = ax.scatter(X, Y,s = 40., c = Charge, linewidth = 0.1,cmap = 'coolwarm') 
         ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax.set_ylim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax.set(adjustable='box-forced', aspect='equal')
         plt.tight_layout()
         return(ax)
 
+    def periodDoubleHistogram(self, folder, savefolder = None):
+        '''
+        Plots a histogram of the 'period' of each spin
+        '''
+        filenames_pos = []
+        filenames_neg = []
+        latticelist_pos = []
+        latticelist_neg = []
+        for root, sub, files in os.walk(folder):
+            for file in files:
+                if 'd1p414214e-01_Angle' in file:
+                    filename = os.path.join(root,file)
+                    filenames_pos.append(filename)
+        filenames_pos.sort(key = self.sortFunc)
+
+        for root, sub, files in os.walk(folder):
+            for file in files:
+                if '-1p414214e-01_Angle' in file:
+                    filename = os.path.join(root,file)
+                    filenames_neg.append(filename)
+        filenames_neg.sort(key = self.sortFunc)
+
+        for i, file_pos, file_neg in zip(np.arange(0, len(filenames_pos)), filenames_pos, filenames_neg):
+            if i == 0:
+                self.load(file_pos)
+                latticelist_pos.append(self.returnLattice())
+                self.load(file_neg)
+                latticelist_neg.append(self.returnLattice())
+                continue
+            self.load(file_pos)
+            latticelist_pos.append(self.returnLattice())
+            self.load(file_neg)
+            latticelist_neg.append(self.returnLattice())
+            #self.graphCharge()
+            print(i, len(latticelist_neg))
+            countdiff_neg = latticelist_neg[i][:,:,7] - latticelist_neg[i-1][:,:,7]
+            countdiff_pos = latticelist_pos[i][:,:,7] - latticelist_pos[i-1][:,:,7]
+            countdiff_neg[np.where(self.returnLattice()[:,:,6]==0)] = np.nan
+            countdiff_pos[np.where(self.returnLattice()[:,:,6]==0)] = np.nan
+            coer = self.returnLattice()[:,:,6]
+            coer[np.where(coer == 0)] = np.nan
+            print(countdiff_pos)
+            print(coer)
+            coer1p_pos = coer[np.where(countdiff_pos==2)].flatten()
+            coer2p_pos = coer[np.where(countdiff_pos==1)].flatten()
+            coer0p_pos = coer[np.where(countdiff_pos==0)].flatten()
+            coer1p_neg = coer[np.where(countdiff_neg==2)].flatten()
+            coer2p_neg = coer[np.where(countdiff_neg==1)].flatten()
+            coer0p_neg = coer[np.where(countdiff_neg==0)].flatten()
+            coer = coer.flatten()
+            coer = coer[np.logical_not(np.isnan(coer))]
+            coer1p_pos = coer1p_pos[np.logical_not(np.isnan(coer1p_pos))]
+            coer2p_pos = coer2p_pos[np.logical_not(np.isnan(coer2p_pos))]
+            coer0p_pos = coer0p_pos[np.logical_not(np.isnan(coer0p_pos))]
+            coer1p_neg = coer1p_neg[np.logical_not(np.isnan(coer1p_neg))]
+            coer2p_neg = coer2p_neg[np.logical_not(np.isnan(coer2p_neg))]
+            coer0p_neg = coer0p_neg[np.logical_not(np.isnan(coer0p_neg))]
+            fig1, ax1 = plt.subplots(1, 1)
+            total = self.countSpins()
+            bin_number = np.ceil(np.sqrt(total))//2*2+1
+            bins = np.linspace(min(coer),max(coer), num = bin_number)
+            #ax.hist(coer, bins=bins, alpha=0.5, label = 'all')
+            ax1.hist(coer0p_pos, bins=bins, alpha=0.5, label = '0Hz')
+            ax1.hist(coer1p_pos, bins=bins, alpha=0.5, label = '1Hz')
+            ax1.hist(coer2p_pos, bins=bins, alpha=0.5, label = '0.5Hz')
+            
+            ax1.set_ylabel('Count')
+            ax1.set_xlabel('Coercive Field')
+            plt.legend()
+            if savefolder == None:
+                plt.savefig(os.path.join(folder, 'HistogramPos')+str(i)+'.png')
+            else:
+                plt.savefig(os.path.join(savefolder, 'HistogramPos')+str(i)+'.png')
+            fig2, ax2 = plt.subplots(1, 1)
+            ax2.hist(coer0p_neg, bins=bins, alpha=0.5, label = '0Hz')
+            ax2.hist(coer1p_neg, bins=bins, alpha=0.5, label = '1Hz')
+            ax2.hist(coer2p_neg, bins=bins, alpha=0.5, label = '0.5Hz')
+            
+            
+            #fit_hist = mlab.normpdf(bins, mu, sigma)
+            #l = plt.plot(bins, fit_hist, 'r--', linewidth=2)
+            
+            ax2.set_ylabel('Count')
+            ax2.set_xlabel('Coercive Field')
+            plt.legend()
+            if savefolder == None:
+                plt.savefig(os.path.join(folder, 'HistogramNeg')+str(i)+'.png')
+            else:
+                plt.savefig(os.path.join(savefolder, 'HistogramNeg')+str(i)+'.png')
+            plt.close()
+        return(coer0p_pos, coer1p_pos, coer2p_pos, coer0p_neg, coer1p_neg, coer2p_neg)
+
+
+
     def periodDoubleAnalysis(self, folder, savefolder = None):
+        '''
+        Will plot the +- H_app microstates using a graphHc and graphSpin. 
+        Will only use graphSpins on the first two lattices.
+        '''
         filenames = []
         for root, sub, files in os.walk(folder):
             for file in files:
@@ -2084,25 +3001,30 @@ class ASI_RPM():
         filenames.sort(key = self.sortFunc)
         Lattice_list = []
         for file in filenames:
-            fig, ax = plt.subplots(1,1)
+            fig = plt.figure(figsize=(9, 9))
+            ax = fig.add_subplot(111)
             self.load(file)
             self.vertexCharge2()
             #self.graphCharge()
-            print(self.returnLattice()[:,:,8])
+            print(self.returnLattice()[:, :, 8])
             Lattice_list.append(self.returnLattice())
             if i>=2:
-                ax = self.graphSpinDiff(ax, self.returnLattice(), Lattice_list[i-2])
+                ax = self.graphHc(ax, self.returnLattice(), Lattice_list[i - 2])
             else:
                 ax = self.graphSpins(ax, self.returnLattice())
             if savefolder == None:
-                plt.savefig(os.path.join(folder, 'FlipDiff')+str(i)+'.svg')
-                plt.savefig(os.path.join(folder, 'FlipDiff')+str(i)+'.png')
+                plt.savefig(os.path.join(folder, 'FlipDiffv2')+str(i)+'.svg')
+                plt.savefig(os.path.join(folder, 'FlipDiffv2')+str(i)+'.png')
             else:
-                plt.savefig(os.path.join(savefolder, 'FlipDiff')+str(i)+'.svg')
-                plt.savefig(os.path.join(savefolder, 'FlipDiff')+str(i)+'.png')
+                plt.savefig(os.path.join(savefolder, 'FlipDiffv2')+str(i)+'.svg')
+                plt.savefig(os.path.join(savefolder, 'FlipDiffv2')+str(i)+'.png')
             i+=1
 
     def folderAnalysis(self, folder, savefolder = None):
+        '''
+        Will produce a plot with the correlation, magnetisation, monopole density, energy against 
+        minor loops number
+        '''
         for root, dirs, files in os.walk(folder):
             new_files = list(filter(lambda x: 'Lattice_counter' in x, files))
             new_files.sort(key = self.sortFunc)
@@ -2140,8 +3062,6 @@ class ASI_RPM():
             monopole.append(self.monopoleDensity())
             energy.append(self.vertexEnergy())
         print(counter, loops,corr, mag, monopole, energy)
-        sns.set_style('ticks')
-        sns.set_style({'axes.grid':True})
         fig, axes = plt.subplots(2,2)
         axes[0,0].plot(counter, corr)
         axes[0,0].set_xlabel('Minor Loop')
@@ -2227,7 +3147,6 @@ class ASI_RPM():
                     print('This is the correlation: ', corr)
                     corr_list.append(corr)
         print(corr_list)
-        sns.set_style('ticks')
         
         #plt.figure()
         fieldStr.insert(0, 0.)
@@ -2245,7 +3164,6 @@ class ASI_RPM():
         ax.set_xlabel('Applied field')
         plt.savefig(os.path.join(savefolder, name+'Mag_new.png'), transparent=True)
         plt.savefig(os.path.join(savefolder, name+'Mag_new.svg'), transparent=True)
-        sns.set_style({'axes.grid':True})
         fig, axm = plt.subplots(1,1)
         axm.plot(corr_list, '-')
         axm.set_xticks(np.array([20, 62, 104, 146, 188]))
@@ -2398,7 +3316,7 @@ class ASI_RPM():
         return(periodDoubleSpinCount)
 
 
-    def vertexTypeMap(self):
+    def vertexTypeMap(self, show = True):
         '''
         Only works with square
         '''
@@ -2422,7 +3340,11 @@ class ASI_RPM():
         cb2.locator = MaxNLocator(nbins = 5)
         cb2.update_ticks()
         ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
-        plt.show()
+        if show == True:
+            plt.show()
+            return(Correlation)
+        else:
+            return(fig)
 
     def vertexEnergy(self):
         vertices = np.array(self.vertexTypePercentage())
@@ -2561,6 +3483,20 @@ class ASI_RPM():
         plt.plot(fields[0, :])
         plt.plot(fields[1, :])
         plt.show()
+
+    def returnWidth(self):
+        return(self.bar_width)
+
+    def returnLength(self):
+        return(self.bar_length)
+
+    def returnThickness(self):
+        return(self.bar_thickness)
+
+    def returnQuenchedDisorder(self):
+        return(self.Hc_std)
+        
+
 
     '''
     Change the parameters using these functions
