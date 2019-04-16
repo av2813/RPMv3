@@ -2,4 +2,7 @@
 *.pyc
 
 Templates/*.py
+OldCode/*
+Latticeimages/*
+defectnpz/*
 
