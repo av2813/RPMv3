@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 import cv2
 import math
-from shapely import geometry
+
 from matplotlib import pyplot as plt
 from scipy import spatial
 import itertools
@@ -585,6 +585,7 @@ def grid(IslandProperties, im_with_keypoints, vertexlengthXbig, dimension, verte
 		print(bar[0], bar[1])
 		Mx[(bar[0]),(bar[1])]=bar[2]
 		My[(bar[0]),(bar[1])]=bar[3]
+
 
 
 	np.savez('Outfile', X, Y, Mx, My)

@@ -2323,7 +2323,9 @@ class ASI_RPM():
         '''
         changes the coercive field of a single bar at (x,y)
         '''
+
         self.lattice[x,y,6] = Hc
+
 
     def makeMonopole(self, x, y, charge = 1, fixed = False, Hc_fix = 1):
         '''
