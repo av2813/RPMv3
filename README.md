@@ -38,6 +38,7 @@ of the class, such as, lattice gap, Msat, etc.
 	- shortShakti
 	- longShakti
 	- tetris
+	- squarePeriodic
 
 #Plotting functions
     - graph: Plots a quiver graph that shows the Coercive field, counts and vertex state

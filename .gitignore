@@ -1,2 +1,7 @@
 
 *.pyc
+Templates/SquareCheckTemplate.py
+Templates/SquareHappQD_template.py
+Templates/SquareHappQDTemplate.py
+Templates/SquareSizeTemplate.py
+Templates/Tetris20x20_PeriodDouble_template.py

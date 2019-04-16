@@ -2137,7 +2137,6 @@ class ASI_RPM():
         calculates the local field at position x, y including the 
         field with n radius with n=1 just including nearest neighbours
         '''
-
         Hl = []
         x1 = x - n
         x2 = x + n+1
@@ -2166,6 +2165,9 @@ class ASI_RPM():
         return(sum(Hl))
 
     def Hlocal3(self, x, y,z =0, radius=None):
+        '''
+        Does not work yet
+        '''
         if radius == None:
             radius = 10*self.unit_cell_len
         #print(radius)
@@ -3342,7 +3344,6 @@ class ASI_RPM():
         ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
         if show == True:
             plt.show()
-            return(Correlation)
         else:
             return(fig)
 

@@ -14,11 +14,11 @@ sns.set_palette("colorblind")
 lattice = rpm.ASI_RPM(16,16)
 lattice.square(0.1, 0.10)
 
-def testDumbbellvsDipole():
+def dumbbellvsdipoleTest():
 	'''
 	To test the difference between the dumbbell and the dipole model
 	'''
-	lattice= rpm.ASI_RPM(50, 50)
+	lattice= rpm.ASI_RPM(20, 20)
 	test = lattice.dumbbell([1.,0.], [40e-9,100e-9], [0., 500e-9])*1000
 	test2 = lattice.dipole([1.,0.], [40e-9,100e-9], [0., 500e-9])*1000
 	print('Dumbbell magnetic field', test)
@@ -65,10 +65,10 @@ def testDumbbellvsDipole():
 	ax.set_title(r'Difference between field: y-offset %.0fnm' %(const_y*1e9))
 	plt.show()
 
-#testDumbbellvsDipole()
+#dumbbellvsdipoleTest()
 
 
-def testLattices():
+def latticesTest():
 	'''
 	To check the creation of all the lattices
 	'''
@@ -93,9 +93,12 @@ def testLattices():
 	shaktiLattice = rpm.ASI_RPM(20,20)
 	shaktiLattice.longShakti()
 	shaktiLattice.graph()
+	periodiclattice= rpm.ASI_RPM(20, 20)
+	periodiclattice.squarePeriodic()
+	periodiclattice.graph()
 
 
-#testLattices()
+latticesTest()
 
 
 
@@ -104,14 +107,51 @@ def graphingTest():
 	test all the graphing software
 	'''
 	lattice= rpm.ASI_RPM(20, 20)
-	lattice.periodicSquare()
-	#lattice.square()
+	#lattice.squarePeriodic()
+	lattice.square()
 	lattice.randomMag()
-	#lattice.graph()
-	#lattice.graphCharge()
+	lattice.graph()
+	lattice.graphCharge()
 	lattice.fieldPlot()
-	#lattice.vertexTypeMap()
-	#lattice.magneticOrdering()
+	lattice.vertexTypeMap()
+	lattice.magneticOrdering()
+
+graphingTest()
+
+
+def saveloadTest(folder, file):
+	'''
+	Test the saving and loading function in the RPM main class
+	'''
+	lattice= rpm.ASI_RPM(20, 20)
+	lattice.square()
+	lattice.randomMag()
+	save(file, folder)
+
+	lattice.squareGroundState()
+	lattice.graph()
+	lattice.load(os.path.join(folder, file))
+	lattice.graph()
+
+
+saveloadTest()
+
+def magneticOrderTest():
+	lattice= rpm.ASI_RPM(20, 20)
+	lattice.square()
+	lattice.squareGroundState()
+	lattice.magneticOrdering()
+	lattice.structureFactor(-2*np.pi, 2*np.pi, 20)
+
+magneticOrderTest()
+
+
+def histogramTest():
+	lattice= rpm.ASI_RPM(20, 20)
+	lattice.square()
+	lattice.randomMag()
+	
+
 
 def testDemag():
 	lattice = rpm.ASI_RPM(21,21)
@@ -149,7 +189,7 @@ def latticePeriodic():
 	lattice.relaxPeriodic(n = 3)
 	lattice.fieldSweepPeriodic(0.1, 20, 45, n = 5, loops = 5)
 
-latticePeriodic()
+#latticePeriodic()
 
 #graphingTest()
 #Lattice.quenchedOrder(pattern = np.array([[1.1, 0.9], [0.9, 1.1]]))
