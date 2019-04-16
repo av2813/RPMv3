@@ -11,11 +11,14 @@ reload(rpm)
 sns.set_style("ticks")
 sns.set_palette("colorblind")
 
-def testDumbbellvsDipole():
+lattice = rpm.ASI_RPM(16,16)
+lattice.square(0.1, 0.10)
+
+def dumbbellvsdipoleTest():
 	'''
 	To test the difference between the dumbbell and the dipole model
 	'''
-	lattice= rpm.ASI_RPM(50, 50)
+	lattice= rpm.ASI_RPM(20, 20)
 	test = lattice.dumbbell([1.,0.], [40e-9,100e-9], [0., 500e-9])*1000
 	test2 = lattice.dipole([1.,0.], [40e-9,100e-9], [0., 500e-9])*1000
 	print('Dumbbell magnetic field', test)
@@ -62,10 +65,10 @@ def testDumbbellvsDipole():
 	ax.set_title(r'Difference between field: y-offset %.0fnm' %(const_y*1e9))
 	plt.show()
 
-#testDumbbellvsDipole()
+#dumbbellvsdipoleTest()
 
 
-def testLattices():
+def latticesTest():
 	'''
 	To check the creation of all the lattices
 	'''
@@ -90,9 +93,12 @@ def testLattices():
 	shaktiLattice = rpm.ASI_RPM(20,20)
 	shaktiLattice.longShakti()
 	shaktiLattice.graph()
+	periodiclattice= rpm.ASI_RPM(20, 20)
+	periodiclattice.squarePeriodic()
+	periodiclattice.graph()
 
 
-#testLattices()
+latticesTest()
 
 
 
@@ -101,41 +107,96 @@ def graphingTest():
 	test all the graphing software
 	'''
 	lattice= rpm.ASI_RPM(20, 20)
+	#lattice.squarePeriodic()
 	lattice.square()
+	lattice.randomMag()
 	lattice.graph()
 	lattice.graphCharge()
 	lattice.fieldPlot()
 	lattice.vertexTypeMap()
 	lattice.magneticOrdering()
 
+graphingTest()
+
+
+def saveloadTest(folder, file):
+	'''
+	Test the saving and loading function in the RPM main class
+	'''
+	lattice= rpm.ASI_RPM(20, 20)
+	lattice.square()
+	lattice.randomMag()
+	save(file, folder)
+
+	lattice.squareGroundState()
+	lattice.graph()
+	lattice.load(os.path.join(folder, file))
+	lattice.graph()
+
+
+saveloadTest()
+
+def magneticOrderTest():
+	lattice= rpm.ASI_RPM(20, 20)
+	lattice.square()
+	lattice.squareGroundState()
+	lattice.magneticOrdering()
+	lattice.structureFactor(-2*np.pi, 2*np.pi, 20)
+
+magneticOrderTest()
+
+
+def histogramTest():
+	lattice= rpm.ASI_RPM(20, 20)
+	lattice.square()
+	lattice.randomMag()
+	
+
+
 def testDemag():
 	lattice = rpm.ASI_RPM(21,21)
 
 	lattice.squareEdges(Hc_mean = 0.05, Hc_std = 0.0)
-	lattice.fixEdges()
+	#lattice.fixEdges()
 	lattice.squareGroundState()
 	#lattice.fieldPlot()
 	#lattice.vertexTypeMap()
 	#lattice.graph()
+	lattice.randomMag()
 	#lattice.changeHc(11, 12, 1.)
-	lattice.flipSpin(11, 12)
-	lattice.changeHc(11, 12, 1.)
-	lattice.flipSpin(33, 34)
-	lattice.changeHc(33, 34, 1.)
-	lattice.flipSpin(15, 16)
-	lattice.changeHc(15, 16, 1.)
-	lattice.flipSpin(27, 34)
-	lattice.changeHc(27, 34, 1.)
+	#lattice.flipSpin(11, 12)
+	#lattice.changeHc(11, 12, 1.)
+	#lattice.flipSpin(33, 34)
+	#lattice.changeHc(33, 34, 1.)
+	#lattice.flipSpin(15, 16)
+	#lattice.changeHc(15, 16, 1.)
+	#lattice.flipSpin(27, 34)
+	#lattice.changeHc(27, 34, 1.)
 	#lattice.flipSpin(19, 34)
 	#lattice.changeHc(25, 9, 1.)
 	#lattice.flipSpin(25, 9)
-	lattice.vertexTypeMap()
-	lattice.fieldSweep(0.055/np.cos(np.pi/4), 5, 45., n=5, loops = 4, folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\SquareGroundStateSolver\FieldSweep\Square20x20_HappHc_v9', q1 = True)
-	lattice.graph()
-	lattice.vertexTypeMap()
-	lattice.graphCharge()
-	lattice.magneticOrdering()
-#testDemag()
+	#lattice.vertexTypeMap()
+	#lattice.fieldSweep(0.055/np.cos(np.pi/4), 5, 45., n=5, loops = 4, folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\SquareGroundStateSolver\FieldSweep\Square20x20_HappHc_v9', q1 = True)
+	#lattice.graph()
+	#lattice.vertexTypeMap()
+	#lattice.graphCharge()
+	#lattice.magneticOrdering()
+	lattice.structureFactor(-4*np.pi, 4*np.pi, 60)
+
+
+def latticePeriodic():
+	lattice.squarePeriodic(0.1, 0.05)
+	lattice.relaxPeriodic(n = 3)
+	lattice.fieldSweepPeriodic(0.1, 20, 45, n = 5, loops = 5)
+
+#latticePeriodic()
+
+#graphingTest()
+#Lattice.quenchedOrder(pattern = np.array([[1.1, 0.9], [0.9, 1.1]]))
+#Lattice.fieldSweepAdaptive(0.1, 20, 45.)
+#Lattice.quenchedOrder(pattern = np.array([[0.9, 1.1], [1.1,0.9]]))
+#Lattice.quenchedOrder(pattern = np.array([[0.9, 0.9], [1.1,1.1]]))
+#Lattice.quenchedOrder(pattern = np.array([[1.1,0.9]]))
 
 def atoi(text):
     return int(text) if text.isdigit() else text
@@ -151,16 +212,16 @@ def natural_keys(text):
 
 
 #testDemag()
-folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\SquareGroundStateSolver\FieldSweep\Square20x20_HappHc_v9'
-counter = 0
-lattice = rpm.ASI_RPM(20,20)
+#folder = r'C:\Users\av2813\Box\GitHub\RPM\RPM_Data\SquareGroundStateSolver\FieldSweep\Square20x20_HappHc_v9'
+#counter = 0
+#lattice = rpm.ASI_RPM(20,20)
 
-lattice.brickwork()
-lattice.save('test3')
-lattice.graph()
-lattice.kagome()
-lattice.load('test3.npz')
-lattice.graph()
+#lattice.brickwork()
+#lattice.save('test3')
+#lattice.graph()
+#lattice.kagome()
+#lattice.load('test3.npz')
+#lattice.graph()
 
 # for root, dirs, files in os.walk(folder):
 # 	print(files)
