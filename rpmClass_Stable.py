@@ -623,7 +623,49 @@ class ASI_RPM():
         #ax.set_ylim([-1*self.unit_cell_len, self.side_len_y*self.unit_cell_len])
         #ax.set_title('Vertex Charge Map')
 
-    def fieldPlot(self, n=5, show = True):
+    def fieldPlot1(self, n=5, show=True):
+        '''
+        Plots the field direction and magnitude at each point on the graph
+        '''
+        grid = self.lattice
+        field = np.zeros((self.side_len_x,self.side_len_y,3))
+        for x in range(0, self.side_len_x):
+            for y in range(0, self.side_len_y):
+                field[x,y,:] = self.Hlocal2(x, y, n=n)
+        X = grid[:,:,0].flatten()
+        Y = grid[:,:,1].flatten()
+        Hx = field[:,:, 0].flatten()
+        Hy = field[:,:, 1].flatten()
+        Hz = field[:,:, 2].flatten()
+        fieldMag = (Hx**2+Hy**2+Hz**2)**0.5
+        fig, ax =plt.subplots(ncols = 2,sharex=True, sharey=True)
+        plt.set_cmap(cm.plasma)
+        graph = ax[0].quiver(X, Y, Hx, Hy,fieldMag, angles='xy', scale_units='xy',  pivot = 'mid')
+        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[1])
+        cb2.locator = MaxNLocator(nbins = 5)
+        #qk = ax[0].quiverkey(graph, 0.45, 0.9, 10, r'$mT$', labelpos='E',
+        #           coordinates='figure')
+        ax[0].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax[0].set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
+        ax[0].set_title('In Plane Field')
+        #fig.colorbar(graph, ax = ax[0],boundaries = np.linspace(np.min(Hc[np.nonzero(Hc)]), max(Hc),1000))
+        graph = ax[1].scatter(X, Y, Hz, marker='o', )
+        ax[1].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax[1].set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
+        ax[1].set_title('Out of Plane Field')
+        for axes in ax:
+            axes.plot([1, 2, 3], [1, 2, 3])
+            axes.set(adjustable='box-forced', aspect='equal')
+        plt.ticklabel_format(style='sci', scilimits=(0,0))
+        plt.tight_layout()
+        print(Hz)
+        #fig.colorbar(graph, ax = ax[0],boundaries = np.linspace(np.min(Hz), max(Hz),1000))
+        if show == True:
+            plt.show()
+        else:
+            return(fig)
+
+    def fieldPlot2(self, n=5, show = True):
         '''
         Plots the field direction and magnitude at each point on the graph
         '''
@@ -670,6 +712,8 @@ class ASI_RPM():
             plt.show()
         else:
             return(fig)
+
+
 
     def vertexTypeMap(self, show = True):
         '''
