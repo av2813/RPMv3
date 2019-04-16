@@ -112,7 +112,7 @@ def graphingTest():
 	lattice.randomMag()
 	lattice.graph()
 	lattice.graphCharge()
-	lattice.fieldPlot()
+	lattice.fieldPlot1()
 	lattice.vertexTypeMap()
 	lattice.magneticOrdering()
 
@@ -134,7 +134,7 @@ def saveloadTest(folder, file):
 	lattice.graph()
 
 
-saveloadTest()
+#saveloadTest()
 
 def magneticOrderTest():
 	lattice= rpm.ASI_RPM(20, 20)
