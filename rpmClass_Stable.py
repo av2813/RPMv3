@@ -569,7 +569,111 @@ class ASI_RPM():
         else:
             return(fig)
 
+    def graphSave(self):
+        '''
+        Plots the positions and directions of the bar magnetisations as a quiver graph
+        '''
+        grid = self.lattice
+        X = grid[:,:,0].flatten()
+        Y = grid[:,:,1].flatten()
+        z = grid[:,:,2].flatten()
+        Mx = grid[:,:,3].flatten()
+        My = grid[:,:,4].flatten()
+        Mz = grid[:,:,5].flatten()
+        Hc = grid[:,:,6].flatten()
+        C = grid[:,:,7].flatten()
+        Charge = grid[:,:,8].flatten()
+        fig, ax =plt.subplots(ncols = 2,sharex=True, sharey=True)
+        plt.set_cmap(cm.prism)
+        graph = ax[0].quiver(X, Y, Mx, My, Hc, angles='xy', scale_units='xy',  pivot = 'mid')
+        ax[0].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax[0].set_ylim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax[0].set_title('Coercive Field')
+        cb1 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[0], format='%.2e',boundaries = np.linspace(np.min(Hc[np.nonzero(Hc)]), max(Hc),1000))
+        cb1.locator = MaxNLocator(nbins = 7)
+        cb1.update_ticks()
+        graph = ax[1].quiver(X, Y, Mx, My, C, angles='xy', scale_units='xy',  pivot = 'mid')
+        ax[1].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax[1].set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
+        ax[1].set_title('Counts')
+        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[1])
+        cb2.locator = MaxNLocator( nbins = 5)
+        cb2.update_ticks()
+        for axes in ax:
+            axes.plot([1, 2, 3], [1, 2, 3])
+            axes.set(adjustable='box-forced', aspect='equal')
+            plt.gca().xaxis.set_major_locator( MaxNLocator(nbins = 7, prune = 'lower') )
+            plt.gca().yaxis.set_major_locator( MaxNLocator(nbins = 6) )
+        plt.ticklabel_format(style='sci', scilimits=(0,0))
+        plt.tight_layout()
+        #fig, ax_ver =plt.subplots()
+        #plt.scatter(X, Y, c = Charge)
+        #plt.quiver(X, Y, Mx, My, C, angles='xy', scale_units='xy',  pivot = 'mid')
+        #ax_ver.set_xlim([-1*self.unit_cell_len, np.max(X)])
+        #ax_ver.set_ylim([-1*self.unit_cell_len, np.max(Y)])
+        #ax_ver.set(adjustable='box-forced', aspect='equal')
+        #plt.ticklabel_format(style='sci', scilimits=(0,0))
+        #plt.tight_layout()
+        #return(graph)
+        
+    def coerciveVertex(self, Hcmean):
+        #plots vertex type and coercive field on he same plot.
+
+        Vertex = self.vertexType()
+        X = self.lattice[:,:,0].flatten()
+        Y = self.lattice[:,:,1].flatten()
+        z = self.lattice[:,:,2].flatten()
+        Mx = self.lattice[:,:,3].flatten()
+        My = self.lattice[:,:,4].flatten()
+        Mz = self.lattice[:,:,5].flatten()
+        Hc = self.lattice[:,:,6].flatten()
+        C = self.lattice[:,:,7].flatten()
+        charge = self.lattice[:,:,8].flatten()
+        Type = Vertex[:,:,4].flatten()
+        Hc = ((Hc-Hcmean)/Hcmean)*100
+        Hcnew = []
+        for item in Hc:
+            if item == -100:
+                item = 0
+            Hcnew.append(item)
+        print(Hcnew)
+ 
+        fig = plt.figure(figsize=(6,6))
+        plt.set_cmap(cm.copper)
+        ax = fig.add_subplot(111)
+        graph = ax.quiver(X, Y, Mx, My, Hcnew, angles='xy', scale_units= 'xy',  pivot = 'mid')
+        ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set_ylim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set_title('Coercive Field')
+        ax.scatter(X,Y,c = Vertex[:,:,4], marker = 'o', cmap = cm.plasma, zorder=2, )
+        cb1 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax)
+        cb1.locator = MaxNLocator(nbins = 7)
+        cb1.update_ticks()
+        
+        '''
+        graph = ax[1].scatter(X,Y,c = Vertex[:,:,4], marker = 'o', zorder=2)
+        ax[1].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax[1].set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
+        ax[1].set_title('VertexTyoe')
+        ax[1].quiver(X, Y, Mx, My, angles='xy', scale_units= 'xy',  pivot = 'mid')
+        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[1])
+        cb2.locator = MaxNLocator( nbins = 5)
+        cb2.update_ticks()
+        '''
+    
+        #fig, ax_ver =plt.subplots()
+        #plt.scatter(X, Y, c = Charge)
+        #plt.quiver(X, Y, Mx, My, C, angles='xy', scale_units='xy',  pivot = 'mid')
+        #ax_ver.set_xlim([-1*self.unit_cell_len, np.max(X)])
+        #ax_ver.set_ylim([-1*self.unit_cell_len, np.max(Y)])
+        #ax_ver.set(adjustable='box-forced', aspect='equal')
+        #plt.ticklabel_format(style='sci', scilimits=(0,0))
+        #plt.tight_layout()
+        #return(graph)
+        #plt.show()
+        
     def graphCharge(self, show = True):
+
         '''
         Plots the positions and directions of the bar magnetisations as a quiver graph
         '''
@@ -578,9 +682,7 @@ class ASI_RPM():
         X = grid[:,:,0].flatten()
         Y = grid[:,:,1].flatten()
         z = grid[:,:,2].flatten()
-        print(grid[:,:,3])
         Mx = grid[:,:,3].flatten()
-        print(grid[:,:,4])
         My = grid[:,:,4].flatten()
         Mz = grid[:,:,5].flatten()
         Hc = grid[:,:,6].flatten()
@@ -623,7 +725,10 @@ class ASI_RPM():
         #ax.set_ylim([-1*self.unit_cell_len, self.side_len_y*self.unit_cell_len])
         #ax.set_title('Vertex Charge Map')
 
+
     def fieldPlot1(self, n=5, show=True):
+
+
         '''
         Plots the field direction and magnitude at each point on the graph
         '''
@@ -715,7 +820,9 @@ class ASI_RPM():
 
 
 
+
     def vertexTypeMap(self, show = True):
+
         '''
         Plots a quiver graph of the state of the lattice with the type of vertice for a square lattice
         Only works with square
@@ -731,19 +838,16 @@ class ASI_RPM():
         C = self.lattice[:,:,7].flatten()
         charge = self.lattice[:,:,8].flatten()
         Type = Vertex[:,:,4].flatten()
-        #print(Type)
-        fig = plt.figure(num = 'test')
+        fig = plt.figure(figsize=(6,6))
         ax = fig.add_subplot(111)
         ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
         ax.set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
-        graph = ax.scatter(X,Y,c = Type, marker = 'o', cmap = cm.plasma, zorder=2)
-        #ax.scatter([-1, -1], [-1, -1], c = [1, 4])
-        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax, boundaries=np.linspace(0.5,4.5,5), ticks = [1, 2,3,4])
-        #cb2.locator = MaxNLocator(nbins = 5)
-        cb2.set_clim(0.5,4.5)
-        #cb2.update_ticks()
-
-        ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
+        graph = ax.scatter(X,Y,c = Vertex[:,:,4], marker = 'o', zorder=2)
+        cb1 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[0], format='%.2e',boundaries = np.linspace(np.min(Hc[np.nonzero(Hc)]), max(Hc),1000))
+        cb1.locator = MaxNLocator(nbins = 7)
+        cb1.update_ticks()
+        ax.quiver(X,Y,Mx,My, Hc, angles='xy', scale_units='xy',  pivot = 'mid')
+        plt.show()
         if show == True:
             plt.show()
         else:
@@ -751,6 +855,7 @@ class ASI_RPM():
 
 
     def localPlot(self,x,y,n, show = True):
+
         '''
         Will plot the lattice with bars with n radius of position x,y 
         plotted in bold. Useful for seeing where the n nearest bars are
@@ -1081,6 +1186,7 @@ class ASI_RPM():
                     tcycles=i
             i += 1
             print(i,loops, period)
+
         self.save('FinalRPMLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals(), folder = folder)
         fieldloops = np.array(fieldloops)
         q = np.array(q)
@@ -1681,7 +1787,11 @@ class ASI_RPM():
         np.savez(os.path.join(folder, 'StateCode'), np.array(positions))
 
     def analysisAppliedFieldSweep(self, folder):
-        statecode = np.load(os.path.join(folder, 'StateCode.npz'))
+        for root, dirs, files in os.walk(folder):
+            for file in files:
+                if 'StateInfo' in file:
+                    statecodefile = file 
+        statecode = np.load(os.path.join(folder, statecodefile))
         
         lattice_list = []
         for root, dirs, files in os.walk(folder):
@@ -3237,6 +3347,7 @@ class ASI_RPM():
         '''
         Returns the correlation between lattice1 and lattice2
         '''
+
         l1 = lattice1.returnLattice()
         l2 = lattice2.returnLattice()
         total = 0
@@ -3247,9 +3358,9 @@ class ASI_RPM():
                     if np.array_equal(l1[x,y, 3:6], l2[x,y,3:6]) ==True:
                         same+=1.0
                     total +=1.0
-        #print("Same total:",same)
-        #print("Absolute total:", total)
-        #print('Correlation factor:',same/total)
+        print("Same total:",same)
+        print("Absolute total:", total)
+        print('Correlation factor:',same/total)
         return(same/total)
 
     def netMagnetisation(self):
@@ -3362,41 +3473,15 @@ class ASI_RPM():
         return(periodDoubleSpinCount)
 
 
-    def vertexTypeMap(self, show = True):
-        '''
-        Only works with square
-        '''
-        Vertex = self.vertexType()
-        X = self.lattice[:,:,0].flatten()
-        Y = self.lattice[:,:,1].flatten()
-        z = self.lattice[:,:,2].flatten()
-        Mx = self.lattice[:,:,3].flatten()
-        My = self.lattice[:,:,4].flatten()
-        Mz = self.lattice[:,:,5].flatten()
-        Hc = self.lattice[:,:,6].flatten()
-        C = self.lattice[:,:,7].flatten()
-        charge = self.lattice[:,:,8].flatten()
-        Type = Vertex[:,:,4].flatten()
-        fig = plt.figure(figsize=(6,6))
-        ax = fig.add_subplot(111)
-        ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
-        ax.set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
-        graph = ax.scatter(X,Y,c = Vertex[:,:,4], marker = 'o')
-        cb2 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax)
-        cb2.locator = MaxNLocator(nbins = 5)
-        cb2.update_ticks()
-        ax.quiver(X,Y,Mx,My,angles='xy', scale_units='xy',  pivot = 'mid')
-        if show == True:
-            plt.show()
-        else:
-            return(fig)
+
 
     def vertexEnergy(self):
         vertices = np.array(self.vertexTypePercentage())
         venergy = 0*vertices[0] + ((2**0.5-1)/(2**0.5-0.5))*vertices[1] + 1.*vertices[2] + (4*2**0.5/(2*2**0.5-1))*vertices[3]
         return(venergy)
 
-    def vertexTypePercentage(self):
+
+    def spinercentage(self):
         '''
         Calculates the percentage of each vertex type
         Only works with square
@@ -3410,9 +3495,13 @@ class ASI_RPM():
         #print(total, Type1,Type2,Type3,Type4)
         vertices = [Type1/total, Type2/total, Type3/total, Type4/total]
         #print(vertices)
+        print(vertices)
         return(vertices)
 
+
     def localCorrelation(self, show = True):
+
+
         '''
         Looks at all the vertices adjacent to each vertex and asigns a correlation factor
         based on how similar they are
@@ -3582,7 +3671,6 @@ class ASI_RPM():
         '''
         changes the coercive field of a single bar at (x,y)
         '''
-
         self.lattice[x,y,6] = Hc
 
 
@@ -3612,6 +3700,211 @@ class ASI_RPM():
                 self.lattice[x,y+1, 6] = Hc_fix
         
 
+
+    def groundStateCheck(self):
+        Vertex = self.vertexType()
+        Type = Vertex[:,:,4].flatten()
+        print(Type)
+        if 2 in Type:
+            print('NO GS')
+            return False
+        else:
+            if 3 in Type:
+                return False
+                print('NO GS')
+            else:
+                print('GS')
+                return True
+        return(GS) 
+
+    def all_same(self, items):
+        #npzfile = self.load(file)
+        #items = npzfile['arr_2']
+        return all(x == items[0] for x in items)
+
+    def lattice_comparison(self, first, second):
+        vertexfirst = self.vertexType()
+        Typefirst = Vertex[:,:,4].flatten()
+        vertexsecon
+
+    def fieldSweepGSAnalysis(self, folder):
+        '''
+        Plots the magnetisation, correlation, monopole density, and vertex population
+        graphs for the summary data
+        '''
+        r=[]
+        parameters_list = []
+        Hmax_list,Htheta_list, steps_list, n_list, loops_list = [],[],[],[],[]
+        Hc_list = []
+        Hc_std_list = []
+        field_steps_list = []
+        q_list = []
+        mag_list = []
+        monopole_list = []
+        vertex_list = []
+        loop1GS = []
+        finalstateGS = []
+        changewithnoGS = []
+        nochange = []
+        cor_check = []
+        '''
+        for MaxH in os.listdir(folder):
+            print(MaxH)
+            if 'png' in MaxH:
+                r=1
+            else:
+                newpath = os.path.join(folder,MaxH)
+                print(newpath)
+                for attempt in os.listdir(newpath):
+                    print(attempt)
+                    if 'a' in attempt:
+                        '''
+        #newpath2 = os.path.join(newpath, attempt)
+        for root, dirs, files in os.walk(folder):
+            for file in files:
+
+                if '.npz' in file:
+                    
+                    if 'Initial' in file:
+                        Initialstate = lattice1.load(os.path.join(folder,file))
+                        
+                    if 'Lattice_counter005_' in file:
+                        file5 = lattice2.load(os.path.join(folder,file))
+                        
+        if self.correlation(Initialstate, file5) == 1:
+            print('1')
+        else: 
+            print('not 1')
+    
+                            self.correlation(Initialstate, lattice4)
+                                
+                            if 'Lattice_counter0047' in file: #checks to see if the lattice is in the ground state after 1 loop.
+                                print(file)
+                                self.load(os.path.join(newpath2,file))
+                                if self.groundStateCheck() is True:
+                                    loop1GS.append(newpath2)
+                                else:    
+                                    for file in os.listdir(newpath2):
+                                        if 'RPMStateInfo' in file:
+                                            npzfile = np.load(os.path.join(newpath2,file))
+                                            parameters_list.append(npzfile['arr_0'])
+                                            print(parameters_list)
+                                            Hmax_list.append(npzfile['arr_0'][0])
+                                            steps_list.append(npzfile['arr_0'][1])
+                                            Htheta_list.append(npzfile['arr_0'][2])
+                                            n_list.append(npzfile['arr_0'][3])
+                                            loops_list.append(npzfile['arr_0'][4])
+                                            Hc_list.append(npzfile['arr_0'][5])
+                                            Hc_std_list.append(npzfile['arr_0'][6])
+                                            field_steps_list.append(npzfile['arr_1'])
+                                            q_list.append(npzfile['arr_2'])
+                                            mag_list.append(npzfile['arr_3'])
+                                            monopole_list.append(npzfile['arr_4'])
+                                            vertex_list.append(npzfile['arr_5'])
+
+                                        
+                        for file in os.listdir(newpath2):
+                            if 'FinalRPM' in file: #checks to see if the lattice finishes in the ground state
+                                self.load(os.path.join(newpath2,file))
+                                if self.groundStateCheck() is True:
+                                    finalstateGS.append(newpath2)
+                                else:
+                                    for file in os.listdir(newpath2):
+                                        if 'RPMStateInfo' in file:
+                                            npzfile = np.load(os.path.join(newpath2,file))
+                                            if self.all_same(npzfile['arr_2']) is True:
+                                                nochange.append(newpath2)
+                                            else:
+                                                changewithnoGS.append(newpath)
+                                                for attempt in os.listdir(newpath):
+                                                    if '1' in attempt:
+                                                        r=1
+                                                    else:
+                                                        newpath2 = os.path.join(newpath, attempt)
+                                                        for file in os.listdir(newpath2):
+                                                            if 'Lattice_counter0047' in file: #checks to see if the lattice is in the ground state after 1 loop.
+                                                                print(file)
+                                                                self.load(os.path.join(newpath2,file))
+                                                                if self.groundStateCheck() is True:
+                                                                    loop1GS.append(newpath2)
+                                                                else:    
+                                                                    for file in os.listdir(newpath2):
+                                                                        if 'RPMStateInfo' in file:
+                                                                            npzfile = np.load(os.path.join(newpath2,file))
+                                                                            parameters_list.append(npzfile['arr_0'])
+                                                                            print(parameters_list)
+                                                                            Hmax_list.append(npzfile['arr_0'][0])
+                                                                            steps_list.append(npzfile['arr_0'][1])
+                                                                            Htheta_list.append(npzfile['arr_0'][2])
+                                                                            n_list.append(npzfile['arr_0'][3])
+                                                                            loops_list.append(npzfile['arr_0'][4])
+                                                                            Hc_list.append(npzfile['arr_0'][5])
+                                                                            Hc_std_list.append(npzfile['arr_0'][6])
+                                                                            field_steps_list.append(npzfile['arr_1'])
+                                                                            q_list.append(npzfile['arr_2'])
+                                                                            mag_list.append(npzfile['arr_3'])
+                                                                            monopole_list.append(npzfile['arr_4'])
+                                                                            vertex_list.append(npzfile['arr_5'])
+
+                        
+        for Hmax, loops, steps, q, mag, monopole, vertex, Hc, angle in zip(Hmax_list, \
+                        loops_list, steps_list, q_list, mag_list, monopole_list, vertex_list, Hc_list, Htheta_list):
+            self.plotCorrelation(folder, q, Hmax, loops, steps, Hc, angle)
+
+            #self.plotMagnetisation(folder, q, Hmax, loops, steps, Hc)
+            #self.plotMonopole(folder, monopole, Hmax, loops, steps)
+            #self.plotVertex(folder, vertex, Hmax, loops, steps)
+        os.chdir(folder)
+        with open('info.txt', 'w') as f:
+            f.write("Ground state after 1 loop \n")
+            for item in loop1GS:
+                f.write("%s\n" % item)   
+            f.write("\n Ground State at end \n")
+            for item in finalstateGS:
+                f.write("%s\n" % item)
+            for item in loop1GS:
+                if item in finalstateGS:
+                    r=1
+                else:
+                    f.write("%s\n" % item)
+            f.write("\n No changes \n")
+            for item in nochange:
+                f.write("%s\n" % item)
+
+            f.write("\n Loops that change but dont settle into the ground state \n")
+            for item in changewithnoGS:
+                f.write("%s\n" % item)
+                r=[]
+        parameters_list = 0
+        Hmax_list,Htheta_list, steps_list, n_list, loops_list = 0,0,0,0,0
+        Hc_list = 0
+        Hc_std_list = 0
+        field_steps_list = 0
+        q_list = 0
+        mag_list = 0
+        monopole_list = 0
+        vertex_list = 0
+        loop1GS = 0
+        finalstateGS = 0
+        changewithnoGS = 0
+        nochange = 0
+        cor_check = 0
+    
+
+
+
+    def plotCorrelation(self, folder, q, Hmax, loops, steps, Hc, angle):
+        corr = plt.figure('Correlation')
+        ax_c = corr.add_subplot(111)
+        ax_c.plot(q,'.', label = (Hmax*np.cos(angle))/Hc)
+        plt.ylabel('Correlation')
+        plt.xlabel('Number of field steps')
+        for i in np.arange(1, loops):
+            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+        plt.legend()
+        plt.savefig(os.path.join(folder, 'CorrelationFieldsteps'))
+
+
     def squareMonopoleState(self):
         '''
         Puts square lattice into an all monopole type state
@@ -3622,6 +3915,29 @@ class ASI_RPM():
                 if self.lattice[x,y,6]!=0:
                     if (x+y-1)%4 != 0:
                         self.flipSpin(x,y)
+
+
+    def plotMagnetisation(self, folder, mag, Hmax, loops, steps, Hc):
+
+        mag_plotx = plt.figure('Magnetisation')
+        ax_mx = mag_plotx.add_subplot(111)
+        ax_mx.plot(2*mag[:,0],'.', label = Hmax/Hc)
+        plt.ylabel('Magnetisation (x-dir)')
+        plt.xlabel('Number of field steps')
+        for i in np.arange(1, loops):
+            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+        plt.legend()
+        plt.savefig(os.path.join(folder, 'MagxFieldsteps'))
+        mag_ploty = plt.figure('Magnetisation')
+        ax_my = mag_ploty.add_subplot(111)
+        ax_my.plot(2*mag[:,1],'.', label = Hmax)
+        for i in np.arange(1, loops):
+            plt.axvline(i*(4*(steps+1)-1), color = 'k')
+        plt.ylabel('Magnetisation (y-dir)')
+        plt.xlabel('Number of field steps')
+        plt.legend()
+        plt.savefig(os.path.join(folder, 'MagyFieldsteps'))
+
 
     def squareGroundState(self):
         '''
