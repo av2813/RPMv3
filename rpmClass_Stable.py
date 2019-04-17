@@ -3726,12 +3726,10 @@ class ASI_RPM():
         vertexfirst = self.vertexType()
         Typefirst = Vertex[:,:,4].flatten()
         vertexsecon
-
+    '''
     def fieldSweepGSAnalysis(self, folder):
-        '''
-        Plots the magnetisation, correlation, monopole density, and vertex population
-        graphs for the summary data
-        '''
+        #Plots the magnetisation, correlation, monopole density, and vertex population
+        #graphs for the summary data
         r=[]
         parameters_list = []
         Hmax_list,Htheta_list, steps_list, n_list, loops_list = [],[],[],[],[]
@@ -3747,7 +3745,6 @@ class ASI_RPM():
         changewithnoGS = []
         nochange = []
         cor_check = []
-        '''
         for MaxH in os.listdir(folder):
             print(MaxH)
             if 'png' in MaxH:
@@ -3758,7 +3755,6 @@ class ASI_RPM():
                 for attempt in os.listdir(newpath):
                     print(attempt)
                     if 'a' in attempt:
-                        '''
         #newpath2 = os.path.join(newpath, attempt)
         for root, dirs, files in os.walk(folder):
             for file in files:
@@ -3891,7 +3887,7 @@ class ASI_RPM():
         cor_check = 0
     
 
-
+    '''
 
     def plotCorrelation(self, folder, q, Hmax, loops, steps, Hc, angle):
         corr = plt.figure('Correlation')
