@@ -28,6 +28,7 @@ My=[]
 #Path to MFM image and lattice image
 imageim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG" #Path to MFM image
 latticeim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG" #Path to lattice image
+folderz = r'C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\Marrows\correct\tmp'	#The folder for the files to be saved in.
 file = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\vmonopole\Hc_std1\field_angle225\maxH1.01\attempt3\Lattice_counter0023_Loop0_FieldApplied-5p442683e-02_Angle3p926991e+00.npz"
 Mx=[]	
 My=[]
@@ -80,6 +81,7 @@ q_list = []
 mag_list = []
 monopole_list = []
 vertex_list = []
+GSloop = 0
 finalstateGS = []
 changewithnoGS = []
 nochange = []
