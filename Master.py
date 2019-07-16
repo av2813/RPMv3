@@ -28,18 +28,12 @@ Mx=[]
 My=[]
 
 #Path to MFM image and lattice image
-imageim = r"C:\Users\Dell XPS 9530\Documents\PhD\Samples\KS002\As grown\Poster\dpole1.png"#Path to MFM image
-latticeim = r"C:\Users\Dell XPS 9530\Documents\PhD\Samples\KS002\As grown\Poster\dpole1.png"#Path to lattice image
 folder = r"C:\Users\Dell XPS 9530\Documents\PhD\RPM Code\Data"	#The folder for the files to be saved in.
 
 
 #initiate image recognition files
 #kagomedetect.kagome(latticeim, imageim)
-#squaredetect.square(latticeim, imageim)
-#npzfile = np.load('Outfile.npz')
 #loads magnetisation from files
-#Mx = npzfile['arr_2']
-#My = npzfile['arr_3']
 #print(Mx)
 #print(My)
 
@@ -99,8 +93,6 @@ lattice = rpm.ASI_RPM(size,size,bar_length = bar_length, \
 					vertex_gap = vertex_gap, bar_thickness = bar_thickness, \
         			bar_width = bar_width, magnetisation = magnetisation)
 lattice.square(Hc, Hc/100)	#Specify whether it is a square or kagome lattice
-#lattice.mfmLoad(Mx,My)
-
 
 #loops through folders from a defect loop and creates a video with microstate animation. (Need to add lattice counter onto the video)
 r=[]
