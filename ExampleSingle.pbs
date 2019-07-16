@@ -1,0 +1,48 @@
+## interpreter directive - this is a shell script
+#!/bin/sh
+#
+## ask PBS for time (format hh:mm:ss)
+#PBS -l walltime=24:00:00
+#
+## ask for one node with 1 cpus and total 2gb memory (per node)
+#PBS -l select=1:ncpus=1:mem=8GB
+## the number of subjobs in queue
+## Ask to join GPU queue
+#
+#
+#
+## ask PBS to email upon job termination
+#
+#
+##load application module
+#
+module load anaconda3
+echo BeforePythonCode
+
+#
+##file management - Copy input file to TMPDIR
+cp $WORK/RPM/Code/Version1/RPMv2/HistogramParameterSweep.py $TMPDIR
+cp $WORK/RPM/Code/Version1/RPMv2/rpmClass_Stable.py $TMPDIR
+ls
+echo
+#
+##command line
+echo RunningCode
+
+pbsexec python HistogramParameterSweep.py
+
+echo FinishedCode
+#
+##file management - Move output files to WORK directory
+echo ListFiles
+ls
+echo CopiedFiles
+cp -a * $WORK/RPM/Results/Histogram2/
+ls $WORK/RPM/Results/Histogram2/
+## Diagnostics
+#
+echo ------------------------------------------------------------------------------------------------------------------
+ls -la /tmp/
+nvidia-smi
+pbsnodes -a
+#
