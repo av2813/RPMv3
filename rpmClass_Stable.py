@@ -797,9 +797,11 @@ class ASI_RPM():
                 q.append(self.correlation(self.previous,self))
                 #vertex.append(self.vertexTypePercentage())
                 if folder == None:
+                    self.save('Lattice_counter00%(counter)d_Loop%(i)d_FieldApplied%(j)e_Angle%(Htheta)e' % locals())
                 else:
                     if not os.path.exists(folder):
                         os.makedirs(folder)
+                    self.save('Lattice_counter00%(counter)d_Loop%(i)d_FieldApplied%(j)e_Angle%(Htheta)e' % locals(), folder = folder)
                 counter+=1
             if q1 == True:
                 if q[-1]==1:
