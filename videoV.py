@@ -21,6 +21,7 @@ import matplotlib.cm as cm
 from pylab import *
 import matplotlib.colors as cl
 import glob
+import zipfile
 reload(rpm)
 
 
@@ -32,7 +33,7 @@ My=[]
 #Path to MFM image and lattice image
 imageim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG"#Path to MFM image
 latticeim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG"#Path to lattice image
-folder = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\vmonopole\Hc_std4"	#The folder for the files to be saved in.
+folder = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\Loops\Test\chiral_Width_1.2e-07_Hc_std_10_field_angle_45_maxH_0.95_attempt_2"	#The folder for the files to be saved in.
 npzfolder = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\defectnpz"
 '''
 for file in os.listdir(npzfolder):
@@ -113,7 +114,7 @@ vertex_gap = 100e-9			#Vertex gap in m
 bar_thickness = 14e-9		#Bar thickness in m
 bar_width = 120e-9			#Bar width in m
 magnetisation = 800e3		#Saturation magnetisation of material in A/m (permalloy is 80e3)
-size=6
+size=11
 
 lattice = rpm.ASI_RPM(size,size,bar_length = bar_length, \
 					vertex_gap = vertex_gap, bar_thickness = bar_thickness, \
@@ -129,93 +130,73 @@ lattice.square(Hc, Hc/100)	#Specify whether it is a square or kagome lattice
 r=[]
 def animation(folder):
 
-	#for defect in os.listdir(folder):
-	#	if defect.endswith("xlsx"):
-	#		r=2
-	#	else:
-	#		newpath = folder + '\\' + defect
-	#		os.chdir(newpath)
-	if 1==1:
-		if 1==1:
-			if 1==1:
-				newpath = folder
-			#for QD in os.listdir(newpath):
-			#	newpath2 = newpath + '\\' + QD
-			#	
-				for angle in os.listdir(newpath):
-					newpath3 = newpath + '\\' + angle
-	
-					print(newpath)
-					print(newpath3)
+	for defect in os.listdir(folder):
+		if defect.endswith("xlsx"):
+			r=2
+		else:
+			newpath = folder + '\\' + defect
+			os.chdir(newpath)
 
-	
+			
+
+			for moresteps in os.listdir(newpath):
+				if '%' in moresteps:
+					newpath2 = newpath + '\\' + QD
+					
+					for QD in os.listdir(newpath2):
+						newpath3 = newpath + '\\' + angle
+		
+						print(newpath)
+						print(newpath3)
 
 
-				
-					for maxfield in os.listdir(newpath3):
-						if maxfield.endswith('txt'):
-							r=1
-						else:
-							newpath4 = newpath3 +'\\' + maxfield
-							os.chdir(newpath4)
-							print(newpath4)
-
-							
-							for attempt in os.listdir(newpath4):
-								newpath5 = newpath4 +'\\' + attempt
-								os.chdir(newpath5)
-
-
-
-
+					
+						for maxfield in os.listdir(newpath3):
+							if maxfield.endswith('txt'):
+								r=1
+							else:
+								newpath4 = newpath3 +'\\' + maxfield
+								os.chdir(newpath4)
 								print(newpath4)
-								print(newpath5)
 
-								os.chdir(newpath5)
-								print(newpath5)
-								os.listdir(newpath5)
-								os.makedirs("pngs2")
+								
+								for attempt in os.listdir(newpath4):
+									newpath5 = newpath4 +'\\' + attempt
+									os.chdir(newpath5)
 
-						
-								a = [s for s in os.listdir(newpath5)
-									if os.path.isfile(os.path.join(newpath5, s))]
-								a.sort(key=lambda s: os.path.getmtime(os.path.join(newpath5, s)))					
-								for file in a:
 
-									if file.startswith('Lattice') and file.endswith('npz'):
-										
-										
-										lattice.load(os.path.join(newpath5,file))
-										lattice.coerciveVertex()
-										file = file.replace(".npz",".png")
-										os.chdir(newpath5+'\\pngs2')
-										plt.savefig(file)
-										plt.close()
+									newpath5 = folder
+
+									#print(newpath4)
+									print(newpath5)
+
+									os.chdir(newpath5)
+									print(newpath5)
+									os.listdir(newpath5)
+									os.makedirs("pngs2")
+									counter = [0,15,31,47,63,79,95,111,127,143,159,175,191,207,223]
 							
-									else:
-										r=1
+									a = [s for s in os.listdir(newpath5)
+										if os.path.isfile(os.path.join(newpath5, s))]
+									a.sort(key=lambda s: os.path.getmtime(os.path.join(newpath5, s)))					
+									for file in a:
+										for i in counter:
+											name = 'Lattice_counter'+str(i)
+											print(name)
+											if name in file:
+												
+												lattice.load(os.path.join(newpath5,file))
+												lattice.coerciveVertex(Hc)
+												plt.show()
+												file = file.replace(".npz",".png")
+												os.chdir(newpath5+'\\pngs2')
+												plt.savefig(file)
+												plt.close()
+									
+											else:
+												r=1
 
-								imagefolder=newpath5+'\\pngs2'
-								os.chdir(imagefolder)
-								video_name = 'Animation.avi'
-								a = [s for s in os.listdir(imagefolder)
-									if os.path.isfile(os.path.join(imagefolder, s))]
-								a.sort(key=lambda s: os.path.getmtime(os.path.join(imagefolder, s)))
-								print(a)
-								#for f in os.listdir(imagefolder):
-									#if f.endswith(".png"):
-									#	images.append(f)
-								frame = cv2.imread(os.path.join(imagefolder, a[0]))
-								height, width, layers = frame.shape
-								video = cv2.VideoWriter(video_name, 0, 3, (width,height))
-								for image in a:
 
-									video.write(cv2.imread(os.path.join(imagefolder, image)))
-							
-								else:
-									r=1
-								cv2.destroyAllWindows()
-								video.release()
 
 
 						
