@@ -72,33 +72,57 @@ def latticesTest():
 	'''
 	To check the creation of all the lattices
 	'''
-	squareLattice = rpm.ASI_RPM(20,20)
+	squareLattice = rpm.ASI_RPM(10,10)
 	squareLattice.square()
 	squareLattice.graph()
-	brickworkLatttice = rpm.ASI_RPM(20,20)
+	#fig = plt.figure(figsize=(9, 9))
+	#ax = fig.add_subplot(111)
+	#squareLattice.graphSpins(ax, squareLattice.returnLattice(), show=True)
+	brickworkLatttice = rpm.ASI_RPM(10,10)
 	brickworkLatttice.brickwork()
 	brickworkLatttice.graph()
-	kagomeLattice = rpm.ASI_RPM(20,20)
+	#fig = plt.figure(figsize=(9, 9))
+	#ax = fig.add_subplot(111)
+	#brickworkLatttice.graphSpins(ax, brickworkLatttice.returnLattice(), show=True)
+	kagomeLattice = rpm.ASI_RPM(10,10)
 	kagomeLattice.kagome()
 	kagomeLattice.graph()
-	lattice = rpm.ASI_RPM(20,20)
+	#fig = plt.figure(figsize=(9, 9))
+	#ax = fig.add_subplot(111)
+	#kagomeLattice.graphSpins(ax, kagomeLattice.returnLattice(), show=True)
+	lattice = rpm.ASI_RPM(10,10)
 	lattice.squareEdges()
 	lattice.graph()
-	tetrisLattice = rpm.ASI_RPM(10,10)
+	#fig = plt.figure(figsize=(9, 9))
+	#ax = fig.add_subplot(111)
+	#lattice.graphSpins(ax, lattice.returnLattice(), show=True)
+	tetrisLattice = rpm.ASI_RPM(3,3)
 	tetrisLattice.tetris()
 	tetrisLattice.graph()
-	shaktiLattice = rpm.ASI_RPM(20,20)
+	#fig = plt.figure(figsize=(9, 9))
+	#ax = fig.add_subplot(111)
+	#tetrisLattice.graphSpins(ax, tetrisLattice.returnLattice(), show=True)
+	shaktiLattice = rpm.ASI_RPM(10,10)
 	shaktiLattice.shortShakti()
 	shaktiLattice.graph()
-	shaktiLattice = rpm.ASI_RPM(20,20)
+	#fig = plt.figure(figsize=(9, 9))
+	#ax = fig.add_subplot(111)
+	#shaktiLattice.graphSpins(ax, shaktiLattice.returnLattice(), show=True)
+	shaktiLattice = rpm.ASI_RPM(5,5)
 	shaktiLattice.longShakti()
 	shaktiLattice.graph()
-	periodiclattice= rpm.ASI_RPM(20, 20)
+	#fig = plt.figure(figsize=(9, 9))
+	#ax = fig.add_subplot(111)
+	#shaktiLattice.graphSpins(ax, shaktiLattice.returnLattice(), show=True)
+	periodiclattice= rpm.ASI_RPM(5, 5)
 	periodiclattice.squarePeriodic()
 	periodiclattice.graph()
+	#fig = plt.figure(figsize=(9, 9))
+	#ax = fig.add_subplot(111)
+	#periodiclattice.graphSpins(ax, periodiclattice.returnLattice(), show=True)
 
 
-latticesTest()
+#latticesTest()
 
 
 
@@ -116,7 +140,7 @@ def graphingTest():
 	lattice.vertexTypeMap()
 	lattice.magneticOrdering()
 
-graphingTest()
+#graphingTest()
 
 
 def saveloadTest(folder, file):
@@ -143,7 +167,7 @@ def magneticOrderTest():
 	lattice.magneticOrdering()
 	lattice.structureFactor(-2*np.pi, 2*np.pi, 20)
 
-magneticOrderTest()
+#magneticOrderTest()
 
 
 def histogramTest():
@@ -190,6 +214,34 @@ def latticePeriodic():
 	lattice.fieldSweepPeriodic(0.1, 20, 45, n = 5, loops = 5)
 
 #latticePeriodic()
+
+Hc = 0.062					#Coercive Field (T)
+Hc_std = 5					#Stanard deviation in the coercive field (as a percentage)
+bar_length = 500e-9			#Bar length in m
+vertex_gap = 100e-9			#Vertex gap in m
+bar_thickness = 20e-9		#Bar thickness in m
+bar_width = 100e-9			#Bar width in m
+magnetisation = 800e3		#Saturation magnetisation of material in A/m (permalloy is 80e3)
+
+
+
+lattice = rpm.ASI_RPM(20, 20, bar_length = bar_length, \
+					vertex_gap = vertex_gap, bar_thickness = bar_thickness, \
+        			bar_width = bar_width, magnetisation = magnetisation)
+
+def FORC_testing():
+	#lattice = rpm.ASI_RPM(20,20)
+	lattice.square(0.1, 0.05)
+	#lattice.relax(np.array([-1,-1, 0.]), n=1)
+	folderloc = r'C:\Users\av2813\Documents\GitHub\RPMv3\testFORC4'
+	lattice.FORC(0.15, 50, 50, 45, folder = folderloc)
+	#lattice.FORC_histogram(5)
+	#lattice.graph()
+	#lattice.fieldPlot1()
+	#lattice.latticeFieldHistogram(10)
+
+FORC_testing()
+
 
 #graphingTest()
 #Lattice.quenchedOrder(pattern = np.array([[1.1, 0.9], [0.9, 1.1]]))
