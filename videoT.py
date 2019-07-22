@@ -32,7 +32,7 @@ My=[]
 #Path to MFM image and lattice image
 imageim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG"#Path to MFM image
 latticeim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG"#Path to lattice image
-folder = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\PinwheelHc"	#The folder for the files to be saved in.
+folder = r'C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\PinwheelT4_New\Distribution1\Hc_std0.001\field_angle45'	#The folder for the files to be saved in.
 npzfolder = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\defectnpz"
 '''
 for file in os.listdir(npzfolder):
@@ -128,7 +128,7 @@ lattice.square(Hc, Hc/100)	#Specify whether it is a square or kagome lattice
 #loops through folders from a defect loop and creates a video with microstate animation. (Need to add lattice counter onto the video)
 r=[]
 def animation(folder, Hc):
-	
+	'''
 	for QD in os.listdir(folder):
 		if QD.endswith("Store"):
 			r=2
@@ -139,15 +139,19 @@ def animation(folder, Hc):
 			for angle in os.listdir(newpath):
 				newpath2 = newpath + '\\' + angle
 				print('OK')
-				
-				for maxfield in os.listdir(newpath2):
-					if maxfield.endswith('txt'):
-						r=1
-					else:
-						newpath3 = newpath2 + '\\' + maxfield
-					
-						for maxfield in os.listdir(newpath3):
-							newpath5 = newpath3 +'\\' + maxfield
+	'''
+	if 1==1:
+		if 1==1:
+			if 1==1:			
+				#for maxfield in os.listdir(folder):
+				#	if maxfield.endswith('txt'):
+				#		r=1
+				#	else:
+				#		newpath3 = folder  + '\\' + maxfield
+				if 1==1:
+					if 1==1:	
+						for maxfield in os.listdir(folder):
+							newpath5 = folder +'\\' + maxfield
 							os.chdir(newpath5)
 							
 							#for attempt in os.listdir(newpath4):
@@ -203,6 +207,10 @@ def animation(folder, Hc):
 									r=1
 								cv2.destroyAllWindows()
 								video.release()
+
+								for file in os.listdir(imagefolder):
+									if 'png' in file:
+										os.remove(file)
 
 
 						

@@ -32,7 +32,7 @@ My=[]
 #Path to MFM image and lattice image
 imageim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG"#Path to MFM image
 latticeim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG"#Path to lattice image
-folder = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\Imonopole"	#The folder for the files to be saved in.
+folder = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\Loops\chiral_width_1.8e-07\chiral_Width_1.8e-07_Hc_std_10_field_angle_45_maxH_1.01_attempt_1"	#The folder for the files to be saved in.
 npzfolder = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\defectnpz"
 '''
 for file in os.listdir(npzfolder):
@@ -124,38 +124,43 @@ lattice.square(Hc, Hc/100)	#Specify whether it is a square or kagome lattice
 #plt.show()
 
 
-
+#lattice.fieldSweepAdaptive((Hc*Happ), steps, field, neighbours, loops, folder = newfolder2, q1 = False)
 #loops through folders from a defect loop and creates a video with microstate animation. (Need to add lattice counter onto the video)
 r=[]
-def animation(folder):
+def animation(folder,Hc):
 	
-	for defect in os.listdir(folder):
-		if defect.endswith("Store"):
-			r=2
-		else:
-			newpath = folder + '\\' + defect
-			os.chdir(newpath)
+	#for distribution in os.listdir(newfolder):
+#		if distribution.endswith("Store"):
+#			r=2
+#		else:
+#			newpath = newfolder + '\\' + distribution 
+#			os.chdir(newpath)
+#
+#			for QD in os.listdir(newpath):
+#				newpath2 = newpath + '\\' + QD
+#				print('OK')
+#				
+#				for angle in os.listdir(newpath2):
+#					newpath3 = newpath2 + '\\' + angle
+#				
+#					for maxfield in os.listdir(newpath3):
+#						newpath5 = newpath3 +'\\' + maxfield
+#						os.chdir(newpath5)
+#						
+#						#for attempt in os.listdir(newpath4):
+#						#	newpath5 = newpath4 +'\\' + attempt
+#						#	os.chdir(newpath5)
+#						if 1==1:
 
-			for QD in os.listdir(newpath):
-				newpath2 = newpath + '\\' + QD
-				print('OK')
-				
-				for angle in os.listdir(newpath2):
-					newpath3 = newpath2 + '\\' + angle
-				
-					for maxfield in os.listdir(newpath3):
-						newpath5 = newpath3 +'\\' + maxfield
-						os.chdir(newpath5)
-						
-						#for attempt in os.listdir(newpath4):
-						#	newpath5 = newpath4 +'\\' + attempt
-						#	os.chdir(newpath5)
-						if 1==1:
 
 
-
-							
-
+	if 1==1:
+		if 1==1:
+			if 1==1:
+				if 1==1:
+					if 1==1:
+						if 1==1:						
+							newpath5 = folder
 							os.chdir(newpath5)
 							print(newpath5)
 							os.listdir(newpath5)
@@ -170,7 +175,7 @@ def animation(folder):
 									
 									
 									lattice.load(os.path.join(newpath5,file))
-									lattice.vertexTypeMap()
+									lattice.coerciveVertex(Hc)
 									file = file.replace(".npz",".png")
 									os.chdir(newpath5+'\\pngs')
 									plt.savefig(file)
@@ -201,9 +206,12 @@ def animation(folder):
 							cv2.destroyAllWindows()
 							video.release()
 
+							for file in os.listdir(imagefolder):
+								if 'png' in file:
+									os.remove(file)
 
 						
-animation(folder)
+animation(folder, 0.014)
 '''
 
 if 1==1:

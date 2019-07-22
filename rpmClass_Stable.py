@@ -14,6 +14,9 @@ import matplotlib.mlab as mlab
 import time
 import pandas as pd
 import scipy.interpolate as spi
+
+import math
+
 import csv
 #plt.rcParams['animation.ffmpeg_path'] = r'C:\Users\av2813\AppData\Local\pip\Cache\wheels\b6\68\c3\a05a35f647ba871e5572b9bbfc0b95fd1c6637a2219f959e7a'
 
@@ -725,6 +728,7 @@ class ASI_RPM():
         C = self.lattice[:,:,7].flatten()
         charge = self.lattice[:,:,8].flatten()
         Type = Vertex[:,:,4].flatten()
+        print(Hc)
         Hc = ((Hc-Hcmean)/Hcmean)*100
         Hcnew = []
         for item in Hc:
@@ -745,6 +749,40 @@ class ASI_RPM():
         cb1.locator = MaxNLocator(nbins = 7)
         cb1.update_ticks()
         
+    def coerciveVertexSave(self, Hcmean, Mx, My):
+        #plots vertex type and coercive field on he same plot.
+
+        Vertex = self.vertexType()
+        X = self.lattice[:,:,0].flatten()
+        Y = self.lattice[:,:,1].flatten()
+        z = self.lattice[:,:,2].flatten()
+        Mx = self.lattice[:,:,3].flatten()
+        My = self.lattice[:,:,4].flatten()
+        Mz = self.lattice[:,:,5].flatten()
+        Hc = self.lattice[:,:,6].flatten()
+        C = self.lattice[:,:,7].flatten()
+        charge = self.lattice[:,:,8].flatten()
+        Type = Vertex[:,:,4].flatten()
+        Hc = ((Hc-Hcmean)/Hcmean)*100
+        Hcnew = []
+        for item in Hc:
+            if item == -100:
+                item = 0
+            Hcnew.append(item)
+        print(Hcnew)
+ 
+        fig = plt.figure(figsize=(6,6))
+        plt.set_cmap(cm.copper)
+        ax = fig.add_subplot(111)
+        graph = ax.quiver(X, Y, Mx, My, Hcnew, angles='xy', scale_units= 'xy',  pivot = 'mid')
+        ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set_ylim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set_title('Coercive Field')
+        ax.scatter(X,Y,c = Vertex[:,:,4], marker = 'o', cmap = cm.plasma, zorder=2, )
+        cb1 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax)
+        cb1.locator = MaxNLocator(nbins = 7)
+        cb1.update_ticks()
+        return(Mx, My)
         '''
         graph = ax[1].scatter(X,Y,c = Vertex[:,:,4], marker = 'o', zorder=2)
         ax[1].set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
@@ -991,6 +1029,39 @@ class ASI_RPM():
             plt.show()
         else:
             return(fig)
+
+    def vertexTypeMap2(self, Mx, My, show = True):
+
+        '''
+        Plots a quiver graph of the state of the lattice with the type of vertice for a square lattice
+        Only works with square. Returns Mx and My to save to npz files
+        '''
+        Vertex = self.vertexType()
+        X = self.lattice[:,:,0].flatten()
+        Y = self.lattice[:,:,1].flatten()
+        z = self.lattice[:,:,2].flatten()
+        Mx = self.lattice[:,:,3].flatten()
+        My = self.lattice[:,:,4].flatten()
+        Mz = self.lattice[:,:,5].flatten()
+        Hc = self.lattice[:,:,6].flatten()
+        C = self.lattice[:,:,7].flatten()
+        charge = self.lattice[:,:,8].flatten()
+        Type = Vertex[:,:,4].flatten()
+        fig = plt.figure(figsize=(6,6))
+        ax = fig.add_subplot(111)
+        ax.set_xlim([-1*self.unit_cell_len, np.max(X)+self.unit_cell_len])
+        ax.set_ylim([-1*self.unit_cell_len, np.max(Y)+self.unit_cell_len])
+        graph = ax.scatter(X,Y,c = Vertex[:,:,4], marker = 'o', zorder=2)
+        cb1 = fig.colorbar(graph, fraction=0.046, pad=0.04, ax = ax[0], format='%.2e',boundaries = np.linspace(np.min(Hc[np.nonzero(Hc)]), max(Hc),1000))
+        cb1.locator = MaxNLocator(nbins = 7)
+        cb1.update_ticks()
+        ax.quiver(X,Y,Mx,My, Hc, angles='xy', scale_units='xy',  pivot = 'mid')
+        plt.show()
+        if show == True:
+            plt.show()
+        else:
+            return(fig)
+        return(Mx,My)
 
 
     def localPlot(self,x,y,n, show = True):
@@ -1690,6 +1761,7 @@ class ASI_RPM():
         else:
             angleFactor = np.sin(Htheta)
         Hc_min = np.nanmin(testLattice[:,:,6])/angleFactor
+        print(Hc_min)
         Hc_array = testLattice[:,:,6].flatten()
         Hc_array = np.append(Hc_array, Hmax)
         Hc_array.sort()
@@ -1701,6 +1773,7 @@ class ASI_RPM():
         idx = np.round(np.linspace(0, len(field_steps) - 1, steps)).astype(int)
         field_steps = field_steps[idx]
         field_steps = np.append(field_steps, Hmax)
+        #print(field_steps)
         #plt.figure()
         #print(Hc_array.size, Hc_new.size, field_steps.size)
         
@@ -1713,6 +1786,8 @@ class ASI_RPM():
         idx = np.append(idx, idx[-1]+1)
         print(Hc_array)
         field_steps = field_steps/angleFactor
+        print(field_steps)
+        
         q = []
         mag = []
         monopole = []
@@ -1722,7 +1797,8 @@ class ASI_RPM():
         period = None
         i=0
         self.relax(n = n)
-        tycles = 15
+        tcycles = 15
+        '''
         if folder == None:
             self.save('InitialRPMLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals(), folder = folder)
         else:
@@ -1772,7 +1848,8 @@ class ASI_RPM():
             np.savez(os.path.join(folder, file), parameters, fieldloops, q, mag, monopole, vertex)
         else:
             np.savez(os.path.join(folder, file), parameters, fieldloops, q, mag, monopole, vertex)
-    
+            '''
+        
     def relax(self, Happlied = np.array([0.,0.,0.]), n=10):
         '''
         Steps through all the the positions in the lattice and if the field applied along the direction
@@ -2530,6 +2607,19 @@ class ASI_RPM():
                     vertex_list.append(npzfile['arr_5'])
         for Hmax, loops, steps, q, mag, monopole, vertex in zip(Hmax_list, \
                         loops_list, steps_list, q_list, mag_list, monopole_list, vertex_list):
+
+            self.plotCorrelation1(folder, q, Hmax, loops, steps)
+            #elf.plotMagnetisation(folder, mag, Hmax, loops, steps, Hmax)
+            #self.plotMonopole(folder, monopole, Hmax, loops, steps)
+            #self.plotVertex(folder, vertex, Hmax, loops, steps)
+            
+
+    def plotCorrelation1(self, folder, q, Hmax, loops, steps):
+        '''
+        Plots the correlation through the field sweep as a function
+        of number of field steps
+        '''
+
             self.plotCorrelation(folder, q, Hmax, loops, steps, Hc_list[-1], Htheta_list[-1])
             self.plotMagnetisation(folder, mag, Hmax, loops, steps, Hc_list[-1])
             self.plotMonopole(folder, monopole, Hmax, loops, steps)
@@ -2539,6 +2629,7 @@ class ASI_RPM():
         return([Hmax_list,steps_list,Htheta_list,n_list,loops_list,Hc_list,Hc_std_list,field_steps_list, q_list, mag_list, monopole_list])
 
     def plotCorrelation(self, folder, q, Hmax, loops, steps, Hc, angle):
+
         corr = plt.figure('Correlation')
         ax_c = corr.add_subplot(111)
         for i in np.arange(1, loops+1):
@@ -4555,6 +4646,8 @@ class ASI_RPM():
                 self.lattice[x+1,y, 6] = Hc_fix
                 self.lattice[x,y-1, 6] = Hc_fix
                 self.lattice[x,y+1, 6] = Hc_fix
+
+    
         
 
 
@@ -4567,6 +4660,28 @@ class ASI_RPM():
             return False
         else:
             if 3 in Type:
+                return False
+                print('NO GS')
+            else:
+                print('GS')
+                return True
+        return(GS) 
+
+    def groundStateCheckReduced(self):
+        Vertex = self.vertexType()
+        Type = Vertex[:,:,4].flatten()
+        #print(Type)
+        dimension = math.sqrt(len(Type))
+        Typereduced=[]
+
+        for i in range(int(7*dimension),int((dimension*dimension)-7*dimension)):
+            Typereduced.append(Type[i])
+        print(Typereduced)
+        if 2 in Typereduced:
+            print('NO GS')
+            return False
+        else:
+            if 3 in Typereduced:
                 return False
                 print('NO GS')
             else:
@@ -4628,7 +4743,7 @@ class ASI_RPM():
             print('1')
         else: 
             print('not 1')
-    
+    '''
                             self.correlation(Initialstate, lattice4)
                                 
                             if 'Lattice_counter0047' in file: #checks to see if the lattice is in the ground state after 1 loop.
@@ -4742,7 +4857,7 @@ class ASI_RPM():
         changewithnoGS = 0
         nochange = 0
         cor_check = 0
-    
+    '''
 
     '''
 
@@ -4854,7 +4969,152 @@ class ASI_RPM():
         l1[:,:,7] = diff
         return(self(self.unit_cells_x, self.unit_cells_y,lattice = diff))
 
-    def dipoleIntPot(self, m_i, m_j, r, r0):
+
+    def chiralFieldSweep(self, Hmax, steps, Htheta, n=10, loops=1, folder = None, q1 = False):
+        '''
+        Sweeps through from 90% of the minimum Coercive field to Hmax at angle Htheta in steps. 
+        Total number of steps for a full minor loop is 4*(step+1).
+        The function then performs loops number of minor loops
+        The Lattice after each field step gets saved to a folder. if folder is None then the 
+        function saves the lattice to the current working directory
+        '''
+        M0 = copy.deepcopy(self)
+        testLattice = copy.deepcopy(self.lattice)
+        Htheta1 = np.pi*Htheta/180
+        Htheta2 = np.pi*(Htheta+90)/180
+        testLattice[testLattice[:,:,6] == 0] = np.nan
+        if np.sin(Htheta) == 0:
+            angleFactor = np.cos(Htheta)
+        else:
+            angleFactor = np.sin(Htheta)
+        Hc_min = np.nanmin(testLattice[:,:,6])/angleFactor
+
+        q = []
+        mag = []
+        monopole = []
+        fieldloops = []
+        vertex = []
+        field_steps1 = np.array([0.])
+        field_steps1 = np.append(field_steps1, np.linspace(Hc_min*0.95,Hmax,steps+1))
+        field_steps1 = np.append(field_steps1, np.array([0.95*Hc_min]))
+        
+        field_steps2 = np.array([0.])
+        field_steps2 = np.append(field_steps2, np.linspace(Hc_min*0.95,Hmax,steps+1))
+        field_steps2 = np.append(field_steps2, np.array([0.95*Hc_min]))
+        #field_steps = np.append(field_steps, np.linspace(Hmax,Hc_min*0.9,steps+1))
+        field_steps3 = np.array([0.])
+        field_steps3 = np.append(field_steps3, np.linspace(-(Hc_min*0.95),-Hmax,steps+1))
+        field_steps3 = np.append(field_steps3, np.array([-0.95*Hc_min]))
+        field_steps4 = np.array([0.])
+        field_steps4 = np.append(field_steps4, np.linspace(-(Hc_min*0.95),-Hmax,steps+1))
+        field_steps4 = np.append(field_steps4, np.array([-0.95*Hc_min]))
+
+        #field_steps = np.append(field_steps, np.linspace(-Hmax,-(Hc_min*0.9),steps+1))
+
+            
+        print(field_steps1)
+        
+        counter = 0
+        if folder == None:
+            self.save('InitialRPMLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals(), folder = folder)
+        else:
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            self.save('InitialRPMLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals(), folder = folder)
+        for i in range(0, loops):
+            self.previous = copy.deepcopy(self)
+            for j in field_steps1:
+                Happlied1 = j*np.array([np.cos(Htheta1),np.sin(Htheta1), 0.])
+                print('Happlied: ', Happlied1)
+                print()
+                self.relax(Happlied1,n)
+                fieldloops.append(np.array([i, j]))
+                mag.append(self.netMagnetisation())
+                monopole.append(self.monopoleDensity())
+                q.append(self.correlation(self.previous,self))
+                #vertex.append(self.vertexTypePercentage())
+                if folder == None:
+                    self.save('Lattice_counter%(counter)d_Loop%(i)d_FieldApplied%(j)e_Angle%(Htheta1)e' % locals())
+                else:
+                    if not os.path.exists(folder):
+                        os.makedirs(folder)
+                    self.save('Lattice_counter%(counter)d_Loop%(i)d_FieldApplied%(j)e_Angle%(Htheta1)e' % locals(), folder = folder)
+                counter+=1
+            
+
+            for j in field_steps4:
+                Happlied2 = j*np.array([np.cos(Htheta2),np.sin(Htheta2), 0.])
+                print('Happlied: ', Happlied2)
+                print()
+                self.relax(Happlied2,n)
+                fieldloops.append(np.array([i, j]))
+                mag.append(self.netMagnetisation())
+                monopole.append(self.monopoleDensity())
+                q.append(self.correlation(self.previous,self))
+                #vertex.append(self.vertexTypePercentage())
+                if folder == None:
+                    self.save('Lattice_counter%(counter)d_Loop%(i)d_FieldApplied%(j)e_Angle%(Htheta2)e' % locals())
+                else:
+                    if not os.path.exists(folder):
+                        os.makedirs(folder)
+                    self.save('Lattice_counter%(counter)d_Loop%(i)d_FieldApplied%(j)e_Angle%(Htheta2)e' % locals(), folder = folder)
+                counter+=1
+            
+
+            for j in field_steps3:
+                Happlied3 = j*np.array([np.cos(Htheta1),np.sin(Htheta1), 0.])
+                print('Happlied: ', Happlied3)
+                print()
+                self.relax(Happlied3,n)
+                fieldloops.append(np.array([i, j]))
+                mag.append(self.netMagnetisation())
+                monopole.append(self.monopoleDensity())
+                q.append(self.correlation(self.previous,self))
+                #vertex.append(self.vertexTypePercentage())
+                if folder == None:
+                    self.save('Lattice_counter%(counter)d_Loop%(i)d_FieldApplied%(j)e_Angle%(Htheta1)e' % locals())
+                else:
+                    if not os.path.exists(folder):
+                        os.makedirs(folder)
+                    self.save('Lattice_counter%(counter)d_Loop%(i)d_FieldApplied%(j)e_Angle%(Htheta1)e' % locals(), folder = folder)
+                counter+=1
+    
+            for j in field_steps2:
+                Happlied4 = j*np.array([np.cos(Htheta2),np.sin(Htheta2), 0.])
+                print('Happlied: ', Happlied4)
+                print()
+                self.relax(Happlied4,n)
+                fieldloops.append(np.array([i, j]))
+                mag.append(self.netMagnetisation())
+                monopole.append(self.monopoleDensity())
+                q.append(self.correlation(self.previous,self))
+                #vertex.append(self.vertexTypePercentage())
+                if folder == None:
+                    self.save('Lattice_counter%(counter)d_Loop%(i)d_FieldApplied%(j)e_Angle%(Htheta2)e' % locals())
+                else:
+                    if not os.path.exists(folder):
+                        os.makedirs(folder)
+                    self.save('Lattice_counter%(counter)d_Loop%(i)d_FieldApplied%(j)e_Angle%(Htheta2)e' % locals(), folder = folder)
+                counter+=1
+            if q1 == True:
+                if q[-1]==1:
+                    break
+        self.save('FinalRPMLattice_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals(), folder = folder)
+        fieldloops = np.array(fieldloops)
+        q = np.array(q)
+        mag = np.array(mag)
+        monopole = np.array(monopole)
+        vertex = np.array(vertex)
+        file = 'RPMStateInfo_Hmax%(Hmax)e_steps%(steps)d_Angle%(Htheta)e_neighbours%(n)d_Loops%(loops)d' % locals()
+        parameters = np.array([Hmax, steps, Htheta, n, loops, self.Hc, self.Hc_std])
+        print(parameters)
+        if folder == None:
+            folder = os.getcwd()
+            np.savez(os.path.join(folder, file), parameters, fieldloops, q, mag, monopole, vertex)
+        else:
+            np.savez(os.path.join(folder, file), parameters, fieldloops, q, mag, monopole, vertex)
+
+def dipoleIntPot(self, m_i, m_j, r, r0):
         m_i = np.array(m_i)
         m_j = np.array(m_j)
         r_ij = np.subtract(np.transpose(r), r0).T
@@ -4942,6 +5202,8 @@ class ASI_RPM():
         return((Etot - EType1)/abs(EType4 - EType1))
 
 
+
+        
 
 class ASI_thermal(ASI_RPM):
     '''

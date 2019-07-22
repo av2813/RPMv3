@@ -32,7 +32,7 @@ My=[]
 #Path to MFM image and lattice image
 imageim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG"#Path to MFM image
 latticeim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG"#Path to lattice image
-folder = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\vmonopole"	#The folder for the files to be saved in.
+folder = r'C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\Loops\Test\normal_Width_DW1.2e-07_Hc_std_0.0001_field_angle_135_maxH_1.14_attempt_4'	#The folder for the files to be saved in.
 npzfolder = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data"
 file = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\vmonopole\Hc_std1\field_angle135\maxH0.96\attempt1\FinalRPMLattice_Hmax8p417399e-02_steps5_Angle2p356194e+00_neighbours5_Loops5.npz"
 file2= r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\vmonopole\Hc_std1\field_angle135\maxH0.96\attempt1\FinalRPMLattice_Hmax8p417399e-02_steps5_Angle2p356194e+00_neighbours5_Loops5.npz"
@@ -128,7 +128,7 @@ lattice.square(Hc, Hc/100)	#Specify whether it is a square or kagome lattice
 #loops through folders from a defect loop and creates a video with microstate animation. (Need to add lattice counter onto the video)
 r=[]
 def animation(folder):
-	
+	'''
 	for defect in os.listdir(folder):
 		if defect.endswith("xlsx"):
 			r=2
@@ -162,52 +162,67 @@ def animation(folder):
 										os.rmdir(file)
 									else:
 										continue
+								'''
+	if 1==1:
+		if 1==1:
+			if 1==1:
+				if 1==1:
+					if 1==1:
+						if 1==1:
+							if 1==1:
+								if 1==1:
+									newpath5 = folder
+									os.chdir(newpath5)
+									if not os.path.isdir(newpath5+'\\pngs'):
+										os.makedirs(newpath5+"\\pngs")
 
 
 
 
-																		#a = [s for s in os.listdir(newpath5)
-								#	if os.path.isfile(os.path.join(newpath5, s))]
-								#a.sort(key=lambda s: os.path.getmtime(os.path.join(newpath5, s)))					
-								#for file in a:
-'''
-									if file.endswith(".npz") and file.startswith("Final"):
-										
-										filepath=newpath5 + '\\' + file
-										print(filepath)
-										lattice.load(filepath 	)
-										lattice.graphSave()
-										file = file.replace(".npz",".png")
-										os.chdir(newpath5+'\\pngs')
-										plt.savefig(file)
-										plt.close()
-							
-									else:
-										r=1
+									
+
+									a = [s for s in os.listdir(newpath5)
+										if os.path.isfile(os.path.join(newpath5, s))]
+									a.sort(key=lambda s: os.path.getmtime(os.path.join(newpath5, s)))					
+									for file in a:
+
+										if file.endswith(".npz") and file.startswith("Lattice"):
+											Hc = 0.014
+											filepath=newpath5 + '\\' + file
+											print(filepath)
+											lattice.load(filepath 	)
+											lattice.coerciveVertex(Hc)
+											file = file.replace(".npz",".png")
+											os.chdir(newpath5+'\\pngs')
+											plt.savefig(file)
+											plt.close()
+								
+										else:
+											r=1
 	
 
-								imagefolder=newpath5+'\\pngs'
-								os.chdir(imagefolder)
-								video_name = 'Animation.avi'
-								a = [s for s in os.listdir(imagefolder)
-									if os.path.isfile(os.path.join(imagefolder, s))]
-								a.sort(key=lambda s: os.path.getmtime(os.path.join(imagefolder, s)))
-								print(a)
-								#for f in os.listdir(imagefolder):
-									#if f.endswith(".png"):
-									#	images.append(f)
-								frame = cv2.imread(os.path.join(imagefolder, a[0]))
-								height, width, layers = frame.shape
-								video = cv2.VideoWriter(video_name, 0, 3, (width,height))
-								for image in a:
+									imagefolder=newpath5+'\\pngs'
+									os.chdir(imagefolder)
+									video_name = 'Animation.avi'
+									a = [s for s in os.listdir(imagefolder)
+										if os.path.isfile(os.path.join(imagefolder, s))]
+									a.sort(key=lambda s: os.path.getmtime(os.path.join(imagefolder, s)))
+									print(a)
+									#for f in os.listdir(imagefolder):
+										#if f.endswith(".png"):
+										#	images.append(f)
+									frame = cv2.imread(os.path.join(imagefolder, a[0]))
+									height, width, layers = frame.shape
+									video = cv2.VideoWriter(video_name, 0, 3, (width,height))
+									for image in a:
 
-									video.write(cv2.imread(os.path.join(imagefolder, image)))
-							
-								else:
-									r=1
-								cv2.destroyAllWindows()
-								video.release()
-'''
+										video.write(cv2.imread(os.path.join(imagefolder, image)))
+								
+									else:
+										r=1
+									cv2.destroyAllWindows()
+									video.release()
+
 					
 animation(folder)
 '''

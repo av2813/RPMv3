@@ -28,7 +28,7 @@ My=[]
 #Path to MFM image and lattice image
 imageim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG" #Path to MFM image
 latticeim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG" #Path to lattice image
-folderz = r'C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\PinwheelHc'	#The folder for the files to be saved in.
+folderz = r'C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\Marrows\correct\tmp'	#The folder for the files to be saved in.
 file = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\vmonopole\Hc_std1\field_angle225\maxH1.01\attempt3\Lattice_counter0023_Loop0_FieldApplied-5p442683e-02_Angle3p926991e+00.npz"
 Mx=[]	
 My=[]
@@ -81,7 +81,7 @@ q_list = []
 mag_list = []
 monopole_list = []
 vertex_list = []
-GSloop = []
+GSloop = 0
 finalstateGS = []
 changewithnoGS = []
 nochange = []
@@ -95,150 +95,152 @@ loop3 = []
 loop4 = []
 loop10 = []
 mostlyT1 = []
-for QD in os.listdir(folderz):
-	folder1 = os.path.join(folderz,QD)
-	for angle in os.listdir(folder1):
-		folders = os.path.join(folder1,angle)
+for defect in os.listdir(folderz):
+	folder0 = os.path.join(folderz,defect)
+	for x in os.listdir(folder0):
+		foldera = os.path.join(folder0, x)
 
-		relax = []
-		loop0 = []
-		loop1 = []
-		loop2 = []
-		loop3 = []
-		loop4 = []
-		loop10 = []
-		nochange = []
-		mostlyT1=[]
-		interesting =[]
+		for QD in os.listdir(foldera):
+			folder1 = os.path.join(foldera,QD)
+			for angle in os.listdir(folder1):
+				folders = os.path.join(folder1,angle)
 
-		for MaxH in os.listdir(folders):
-			print(MaxH)
-			folder2 = os.path.join(folders,MaxH)
-			for attempt in os.listdir(folder2):
-				folder = os.path.join(folder2, attempt)
-				#newpath2 = os.path.join(newpath, attempt)
-				print(folder)
-			#Checks for a change after H+
+				relax = []
+				loop0 = []
+				loop1 = []
+				loop2 = []
+				loop3 = []
+				loop4 = []
+				loop10 = []
+				nochange = []
+				mostlyT1=[]
+				interesting =[]
 
-				#loops through ends of loops and sees if they're in the ground state
-				for files in os.listdir(folder):
-					if 'Lattice_counter0023' in files:
-						lattice1.load(os.path.join(folder,files))
-						if lattice1.groundStateCheck() is True:
-							GSloop = 0
-						else:
-							for files in os.listdir(folder):
-								if 'Lattice_counter0047' in files:
-									lattice1.load(os.path.join(folder,files))
-									if lattice1.groundStateCheck() is True:
-										GSloop = 1
-									else:
-										for files in os.listdir(folder):
-											if 'Lattice_counter0071' in files:
-												lattice1.load(os.path.join(folder,files))
-												if lattice1.groundStateCheck() is True:
-													GSloop = 2
-												else:
-													for files in os.listdir(folder):
-														if 'Lattice_counter0095' in files:
-															lattice1.load(os.path.join(folder,files))
-															if lattice1.groundStateCheck() is True:
-																GSloop = 3
-															else:
-																for files in os.listdir(folder):
-																	if 'Lattice_counter00119' in files:
-																		lattice1.load(os.path.join(folder,files))
-																		if lattice1.groundStateCheck() is True:
-																			GSloop = 4
-																		else:
-																			GSloop = 10
-																			percentages = lattice1.vertexTypePercentage()
-																			T1 = percentages[0]
-				print(folder)
-				print("GS loop = " + str(GSloop))
+				for MaxH in os.listdir(folders):
+					print(MaxH)
+					folder = os.path.join(folders,MaxH)
 
-				#Checks to see if there are any changes
-				for file in os.listdir(folder):
-					if 'RPMStateInfo' in file:
-						npzfile = np.load(os.path.join(folder,file))
-						items = (npzfile['arr_2'])
-						if lattice1.all_same(items) == True:
-							nochanges = 1
-						else:
-							nochanges = 0
+					#Checks for a change after H+
 
-				#appends no change list
-				if percentage == 1:
-					mostlyT1.append([folder, T1])
+						#loops through ends of loops and sees if they're in the ground state
+					for files in os.listdir(folder):
+						if 'Lattice_counter0023' in files:
+							lattice1.load(os.path.join(folder,files))
+							if lattice1.groundStateCheck() is True:
+								GSloop = 0
+							else:
+								for files in os.listdir(folder):
+									if 'Lattice_counter0047' in files:
+										lattice1.load(os.path.join(folder,files))
+										if lattice1.groundStateCheck() is True:
+											GSloop = 1
+										else:
+											for files in os.listdir(folder):
+												if 'Lattice_counter0071' in files:
+													lattice1.load(os.path.join(folder,files))
+													if lattice1.groundStateCheck() is True:
+														GSloop = 2
+													else:
+														for files in os.listdir(folder):
+															if 'Lattice_counter0095' in files:
+																lattice1.load(os.path.join(folder,files))
+																if lattice1.groundStateCheck() is True:
+																	GSloop = 3
+																else:
+																	for files in os.listdir(folder):
+																		if 'Lattice_counter00119' in files:
+																			lattice1.load(os.path.join(folder,files))
+																			if lattice1.groundStateCheck() is True:
+																				GSloop = 4
+																			else:
+																				GSloop = 10
+																				percentages = lattice1.vertexTypePercentage()
+																				T1 = percentages[0]
+					print(folder)
+					print("GS loop = " + str(GSloop))
 
-				if nochanges == 1:
-					nochange.append(folder)
+					#Checks to see if there are any changes
+					for file in os.listdir(folder):
+						if 'RPMStateInfo' in file:
+							npzfile = np.load(os.path.join(folder,file))
+							items = (npzfile['arr_2'])
+							if lattice1.all_same(items) == True:
+								nochanges = 1
+							else:
+								nochanges = 0
 
-				if GSloop == 0:
-					loop0.append(folder)
+					#appends no change list
+					if percentage == 1:
+						mostlyT1.append([folder, T1])
 
-				if GSloop == 1:
-					loop1.append(folder)
+					if nochanges == 1:
+						nochange.append(folder)
 
-				if GSloop == 2:
-					loop2.append(folder)
+					if GSloop == 0:
+						loop0.append(folder)
 
-				if GSloop == 3:
-					loop3.append(folder)
+					if GSloop == 1:
+						loop1.append(folder)
 
-				if GSloop == 4:
-					loop4.append(folder)
+					if GSloop == 2:
+						loop2.append(folder)
 
-				if GSloop == 10:
-					loop10.append([folder, T1])
+					if GSloop == 3:
+						loop3.append(folder)
 
-				if GSloop > 3 and T1 !=0:
-					interesting.append([folder,T1])
-		
+					if GSloop == 4:
+						loop4.append(folder)
 
-		os.chdir(folders)
-		with open('info.txt', 'w') as f:
+					if GSloop == 10:
+						loop10.append([folder, T1])
 
-			f.write("\n No changes \n")
-			for item in nochange:
-				f.write("%s\n" % item)
+					if GSloop > 3 and T1 !=0:
+						interesting.append([folder,T1])
+			
 
-			f.write("\n Loop1 relaxation\n")
-			for item in loop0:
-				f.write("%s\n" % item)
+			os.chdir(folders)
+			with open('info.txt', 'w') as f:
 
-			f.write("\n Loop2 relaxation\n")
-			for item in loop1:
-				f.write("%s\n" % item)
+				f.write("\n No changes \n")
+				for item in nochange:
+					f.write("%s\n" % item)
 
-			f.write("\n Loop3 relaxation\n")
-			for item in loop2:
-				f.write("%s\n" % item)
+				f.write("\n Loop1 relaxation\n")
+				for item in loop0:
+					f.write("%s\n" % item)
 
-			f.write("\n Loop4 relaxation\n")
-			for item in loop3:
-				f.write("%s\n" % item)
+				f.write("\n Loop2 relaxation\n")
+				for item in loop1:
+					f.write("%s\n" % item)
 
-			f.write("\n Loop5 relaxation\n")
-			for item in loop4:
-				f.write("%s\n" % item)
-		    
-			f.write("\n Changes and no relaxation after 1 loop \n")
-			for item in loop10:
-				f.write("%s\n" % item)   
+				f.write("\n Loop3 relaxation\n")
+				for item in loop2:
+					f.write("%s\n" % item)
 
-			f.write("\n Interesting")
-			for item in interesting:
-				f.write("%s\n" % item)
-		del mostlyT1
-		del nochange
-		del loop0
-		del loop1
-		del loop2
-		del loop3
-		del loop4
-		del loop10
-		del interesting
+				f.write("\n Loop4 relaxation\n")
+				for item in loop3:
+					f.write("%s\n" % item)
+
+				f.write("\n Loop5 relaxation\n")
+				for item in loop4:
+					f.write("%s\n" % item)
+			    
+				f.write("\n Changes and no relaxation after 1 loop \n")
+				for item in loop10:
+					f.write("%s\n" % item)   
+
+				f.write("\n Interesting")
+				for item in interesting:
+					f.write("%s\n" % item)
+			del mostlyT1
+			del nochange
+			del loop0
+			del loop1
+			del loop2
+			del loop3
+			del loop4
+			del loop10
+			del interesting
     
 		'''
 

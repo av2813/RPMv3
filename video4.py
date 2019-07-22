@@ -21,9 +21,11 @@ import matplotlib.cm as cm
 from pylab import *
 import matplotlib.colors as cl
 import glob
+import zipfile
 reload(rpm)
 
-
+import gzip
+import shutil
 
 
 Mx=[]	
@@ -32,7 +34,7 @@ My=[]
 #Path to MFM image and lattice image
 imageim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG"#Path to MFM image
 latticeim = r"C:\Users\kjs18\Documents\RPM\RPM Code\T.PNG"#Path to lattice image
-folder = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\vmonopole\Hc_std0\field_angle45\maxH0.96\attempt1"	#The folder for the files to be saved in.
+folder = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\Defect_Simualtion\Marrows\Chiral\Dist 1"	#The folder for the files to be saved in.
 npzfolder = r"C:\Users\kjs18\Documents\RPM\RPM Code\Data\defectnpz"
 '''
 for file in os.listdir(npzfolder):
@@ -128,7 +130,7 @@ lattice.square(Hc, Hc/100)	#Specify whether it is a square or kagome lattice
 #loops through folders from a defect loop and creates a video with microstate animation. (Need to add lattice counter onto the video)
 r=[]
 def animation(folder):
-	'''
+	
 	for defect in os.listdir(folder):
 		if defect.endswith("Store"):
 			r=2
@@ -136,77 +138,96 @@ def animation(folder):
 			newpath = folder + '\\' + defect
 			os.chdir(newpath)
 
-			for QD in os.listdir(newpath):
-				newpath2 = newpath + '\\' + QD
-				print('OK')
-				
-				for angle in os.listdir(newpath2):
-					newpath3 = newpath2 + '\\' + angle
-				
-					for maxfield in os.listdir(newpath3):
-						newpath5 = newpath3 +'\\' + maxfield
-						os.chdir(newpath5)
+			for distribution in os.listdir(newpath):
+				if '%' in distribution:
+					newpath1 = newpath + '\\' + distribution +'\\chiral'
+
+					for QD in os.listdir(newpath1):
+						newpath2 = newpath1 + '\\' + QD
+						print('OK')
 						
-						#for attempt in os.listdir(newpath4):
-						#	newpath5 = newpath4 +'\\' + attempt
-						#	os.chdir(newpath5)
-						if 1==1:
-	'''
-	newpath5 = folder
-	if 1==1:
-		if 1==1:
-			if 1==1:
-				if 1==1:
-					if 1==1:
-						if 1==1:
-							if 1==1:
-							#if os.path.isdir(newpath5+'\\pngs'):
-							#	continue
-							#else:
+						for angle in os.listdir(newpath2):
+							newpath3 = newpath2 + '\\' + angle
+						
+							for maxfield in os.listdir(newpath3):
+								newpath5 = newpath3 +'\\' + maxfield
 								os.chdir(newpath5)
+								
+								#for attempt in os.listdir(newpath4):
+								#	newpath5 = newpath4 +'\\' + attempt
+								#	os.chdir(newpath5)
 								print(newpath5)
-								os.listdir(newpath5)
-								os.makedirs("pngs")
-						
-								a = [s for s in os.listdir(newpath5)
-									if os.path.isfile(os.path.join(newpath5, s))]
-								a.sort(key=lambda s: os.path.getmtime(os.path.join(newpath5, s)))					
-								for file in a:
+								if 1==1:
+									if 1==1:
+									#if os.path.isdir(newpath5+'\\pngs'):
+									#	continue
+									#else:
 
-									if file.endswith(".npz") and file.startswith("Lattice"):
+										imagefolder = newpath5 + '\\pngs'
+										if os.path.exists(imagefolder):
+											os.chdir(imagefolder)
+											for file in os.listdir(imagefolder):
+												os.remove(file)
+
+										os.chdir(newpath5)
+										os.listdir(newpath5)
+										if not os.path.exists(imagefolder):
+											os.mkdir("pngs")
+
 										
-										
-										lattice.load(os.path.join(newpath5,file))
-										lattice.vertexTypeMap()
-										file = file.replace(".npz",".png")
-										os.chdir(newpath5+'\\pngs')
-										plt.savefig(file)
-										plt.close()
-							
-									else:
-										r=1
+										os.chdir("pngs")
+								
+										a = [s for s in os.listdir(newpath5)
+											if os.path.isfile(os.path.join(newpath5, s))]
+										a.sort(key=lambda s: os.path.getmtime(os.path.join(newpath5, s)))					
+										for file in a:
 
-								imagefolder=newpath5+'\\pngs'
-								os.chdir(imagefolder)
-								video_name = 'Animation.avi'
-								a = [s for s in os.listdir(imagefolder)
-									if os.path.isfile(os.path.join(imagefolder, s))]
-								a.sort(key=lambda s: os.path.getmtime(os.path.join(imagefolder, s)))
-								print(a)
-								#for f in os.listdir(imagefolder):
-									#if f.endswith(".png"):
-									#	images.append(f)
-								frame = cv2.imread(os.path.join(imagefolder, a[0]))
-								height, width, layers = frame.shape
-								video = cv2.VideoWriter(video_name, 0, 3, (width,height))
-								for image in a:
+											if file.endswith(".npz") and file.startswith("Lattice"):
+												
+												
+												lattice.load(os.path.join(newpath5,file))
+												lattice.coerciveVertex(0.062)
+												file = file.replace(".npz",".png")
+												os.chdir(newpath5+'\\pngs')
+												plt.savefig(file)
+												plt.close()
+									
+											else:
+												r=1
 
-									video.write(cv2.imread(os.path.join(imagefolder, image)))
-							
-								else:
-									r=1
-								cv2.destroyAllWindows()
-								video.release()
+										imagefolder=newpath5+'\\pngs'
+										os.chdir(imagefolder)
+										video_name = 'Animation.avi'
+										a = [s for s in os.listdir(imagefolder)
+											if os.path.isfile(os.path.join(imagefolder, s))]
+										a.sort(key=lambda s: os.path.getmtime(os.path.join(imagefolder, s)))
+										print(a)
+										#for f in os.listdir(imagefolder):
+											#if f.endswith(".png"):
+											#	images.append(f)
+										frame = cv2.imread(os.path.join(imagefolder, a[0]))
+										height, width, layers = frame.shape
+										video = cv2.VideoWriter(video_name, 0, 3, (width,height))
+										for image in a:
+
+											video.write(cv2.imread(os.path.join(imagefolder, image)))
+									
+										else:
+											r=1
+										cv2.destroyAllWindows()
+										video.release()
+
+										for file in os.listdir(imagefolder):
+											if 'png' in file:
+												os.remove(file)
+
+										with open('Animation.avi', 'rb') as f_in:
+  											  with open('Animation.gz', 'wb') as f_out:
+     												with gzip.GzipFile('Animation.avi', 'wb', fileobj=f_out) as f_out:
+           												shutil.copyfileobj(f_in, f_out)
+
+
+										os.remove('Animation.avi')
 							
 animation(folder)
 '''
