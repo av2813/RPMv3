@@ -5,4 +5,9 @@ Templates/*.py
 OldCode/*
 Latticeimages/*
 defectnpz/*
-
+HPC/*
+Analysis/*
+Figures/*
+JupyterLab/*
+Templates/*
+.ipynb_checkpoints/*
